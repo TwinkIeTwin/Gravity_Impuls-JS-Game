@@ -1,3 +1,4 @@
+
 (function() {
     function Sprite(url, pos, size, speed, frames, dir, once) {
         this.pos = pos;
