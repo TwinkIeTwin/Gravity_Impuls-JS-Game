@@ -32,10 +32,14 @@ canvas.height = clientHeight;
 document.body.appendChild(canvas);
 
 canvas.addEventListener("mousedown", handleMouseDown);
-
 canvas.addEventListener("mouseup", handleMouseUp);
 
+camera.pos.set(clientWidth / 2, clientHeight / 2);
+
 var isMouseDown = false;
+var xMouseUp = 0;
+var yMouseUp = 0;
+var vMouseUp = new Vec(0, 0);
 
 function handleMouseDown(e){
     isMouseDown = true;
@@ -43,12 +47,14 @@ function handleMouseDown(e){
 }
 
 function handleMouseUp(e){
+    xMouseUp = e.pageX;
+    yMouseUp = e.pageY;
     isMouseDown = false;
     soundTestAction.play();
+    vMouseUp.set(xMouseUp / clientWidth, yMouseUp / clientHeight);
 }
 
 var zoomRate = 0.0;
-
 var slowmoCoefficient = 1;
 
 // The main game loop
@@ -101,14 +107,24 @@ var scoreEl = document.getElementById('score');
 var playerSpeed = 200;
 var bulletSpeed = 500;
 var enemySpeed = 100;
+
 const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
 
 // Update game objects
 function update(dt) {
     gameTime += dt;
-    if (isMouseDown){
+    
+    // vPlayer = new Vec(player.pos[0] / clientWidth, player.pos[1] / clientHeight);
+    // vDir = vPlayer.vectorTo(vMouseUp);
+    // vDir.normalize();
+    // vDir = vDir.negative();
+    // player.pos[0] += playerSpeed * dt * (vDir.x);
+    // player.pos[1] += playerSpeed * dt * (vDir.y);
+    
 
+
+    if (isMouseDown){
         if (zoomRate < 0.25){
             var zoomPerSecondSpeed = zoomSpeed * dt;
             zoomRate += zoomPerSecondSpeed;
@@ -152,8 +168,8 @@ function update(dt) {
 
     if(Math.random() < 1 - Math.pow(.993, gameTime)) {
         enemies.push({
-            pos: [canvas.width,
-                  Math.random() * (canvas.height - 39)],
+            pos: [canvas.width + camera.pos.x,
+                  Math.random() * (canvas.height + camera.pos.y - 39)],
             sprite: new Sprite('img/sprites.png', [0, 78], [80, 39],
                                6, [0, 1, 2, 3, 2, 1])
         });
@@ -166,19 +182,20 @@ function update(dt) {
 
 function handleInput(dt) {
     if(input.isDown('DOWN') || input.isDown('s')) {
-        player.pos[1] += playerSpeed * dt;
+       //player.pos[1] += playerSpeed * dt;
+        camera.pos.y += playerSpeed * dt;
     }
 
     if(input.isDown('UP') || input.isDown('w')) {
-        player.pos[1] -= playerSpeed * dt;
+        camera.pos.y -= playerSpeed * dt;
     }
 
     if(input.isDown('LEFT') || input.isDown('a')) {
-        player.pos[0] -= playerSpeed * dt;
+        camera.pos.x -= playerSpeed * dt;
     }
 
     if(input.isDown('RIGHT') || input.isDown('d')) {
-        player.pos[0] += playerSpeed * dt;
+        camera.pos.x += playerSpeed * dt;
     }
 
     if(input.isDown('SPACE') &&
@@ -206,19 +223,24 @@ function updateEntities(dt) {
     player.sprite.update(dt);
 
     // Update all the bullets
-    for(var i=0; i<bullets.length; i++) {
+    for(var i=0; i<bullets.length; i++) 
+    {
         var bullet = bullets[i];
 
-        switch(bullet.dir) {
-        case 'up': bullet.pos[1] -= bulletSpeed * dt; break;
-        case 'down': bullet.pos[1] += bulletSpeed * dt; break;
-        default:
-            bullet.pos[0] += bulletSpeed * dt;
+        switch(bullet.dir)
+        {
+            case 'up': bullet.pos[1] -= bulletSpeed * dt; break;
+            case 'down': bullet.pos[1] += bulletSpeed * dt; break;
+            default:
+                bullet.pos[0] += bulletSpeed * dt;
         }
 
         // Remove the bullet if it goes offscreen
-        if(bullet.pos[1] < 0 || bullet.pos[1] > canvas.height ||
-           bullet.pos[0] > canvas.width) {
+        if(bullet.pos[1] < camera.pos.y - canvas.height / 2 ||
+            bullet.pos[1] > camera.pos.y + canvas.height / 2 ||
+            bullet.pos[0] < camera.pos.x - canvas.width / 2 ||
+            bullet.pos[0] > camera.pos.x + canvas.width / 2)
+        {
             bullets.splice(i, 1);
             i--;
         }
@@ -230,7 +252,7 @@ function updateEntities(dt) {
         enemies[i].sprite.update(dt);
 
         // Remove if offscreen
-        if(enemies[i].pos[0] + enemies[i].sprite.size[0] < 0) {
+        if(enemies[i].pos[0] + enemies[i].sprite.size[0] + camera.pos.x < 0) {
             enemies.splice(i, 1);
             i--;
         }
@@ -256,20 +278,23 @@ function checkCollisions() {
     
     // Run collision detection for all enemies and bullets
     for(var i=0; i<enemies.length; i++) {
-        var pos = enemies[i].pos;
+        var enemyPos = enemies[i].pos;
+        enemyPos[0].x += camera.pos.x;
+        enemyPos[1].y += camera.pos.y;
+
         var size = enemies[i].sprite.size;
 
         for(var j=0; j<bullets.length; j++) {
             var pos2 = bullets[j].pos;
             var size2 = bullets[j].sprite.size;
 
-            if(boxCollides(pos, size, pos2, size2)) {
+            if(boxCollides(enemyPos, size, pos2, size2)) {
                 // Remove the enemy
                 enemies.splice(i, 1);
                 i--;
 
                 // Add score
-                score += 100;
+                score += 1;
 
                 // Add an explosion
                 // explosions.push({
@@ -289,26 +314,27 @@ function checkCollisions() {
             }
         }
 
-        if(boxCollides(pos, size, player.pos, player.sprite.size)) {
+        if(boxCollides(enemyPos, size, player.pos, player.sprite.size)) {
             gameOver();
         }
     }
+
 }
 
 function checkPlayerBounds() {
     // Check bounds
     if(player.pos[0] < 0) {
-        player.pos[0] = 0;
+       // player.pos[0] = 0;
     }
     else if(player.pos[0] > canvas.width - player.sprite.size[0]) {
-        player.pos[0] = canvas.width - player.sprite.size[0];
+      //  player.pos[0] = canvas.width - player.sprite.size[0];
     }
 
     if(player.pos[1] < 0) {
-        player.pos[1] = 0;
+       // player.pos[1] = 0;
     }
     else if(player.pos[1] > canvas.height - player.sprite.size[1]) {
-        player.pos[1] = canvas.height - player.sprite.size[1];
+     //   player.pos[1] = canvas.height - player.sprite.size[1];
     }
 }
 
@@ -323,18 +349,31 @@ function render() {
     }
 
     renderEntities(bullets);
-    renderEntities(enemies);
+    renderEntitiesRelativeCamera(enemies);
 };
 
-function renderEntities(list) {
+function renderEntities(list){
     for(var i=0; i<list.length; i++) {
         renderEntity(list[i]);
+    }   
+}
+
+function renderEntitiesRelativeCamera(list) {
+    for(var i=0; i<list.length; i++) {
+        renderEntityRelativeCamera(list[i]);
     }    
 }
 
-function renderEntity(entity) {
+function renderEntity(entity){
     ctx.save();
     ctx.translate(entity.pos[0], entity.pos[1]);
+    entity.sprite.render(ctx);
+    ctx.restore();
+}
+
+function renderEntityRelativeCamera(entity) {
+    ctx.save();
+    ctx.translate(entity.pos[0] - camera.pos.x, entity.pos[1] - camera.pos.y);
     entity.sprite.render(ctx);
     ctx.restore();
 }
@@ -353,5 +392,5 @@ function reset() {
     enemies = [];
     bullets = [];
 
-    player.pos = [50, canvas.height / 2];
+    player.pos = [clientWidth / 2, clientHeight / 2];
 };
