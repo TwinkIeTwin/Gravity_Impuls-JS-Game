@@ -33,25 +33,65 @@ document.body.appendChild(canvas);
 
 canvas.addEventListener("mousedown", handleMouseDown);
 canvas.addEventListener("mouseup", handleMouseUp);
+canvas.addEventListener("mousemove", handleMouseMoved);
 
 camera.pos.set(clientWidth / 2, clientHeight / 2);
 
-var isMouseDown = false;
-var xMouseUp = 0;
-var yMouseUp = 0;
-var vMouseUp = new Vec(0, 0);
+var player = {
+    pos: [camera.pos.x, camera.pos.y],
+    sprite: new Sprite('img/treug.png', [0, 0], [86, 77], 0, [0])
+};
 
-function handleMouseDown(e){
+var isMouseDown = false;
+
+var vMouse = new Vec(0, 0);
+var vDirMouse = new Vec(0, 0);
+var vMouseUp = new Vec(0, 0);
+var vDirMouseUp = new Vec(0, 0);
+var vLastMouseUp = new Vec(0, 0);
+var vPlayer = new Vec(player.pos[0] / clientWidth, player.pos[1] / clientHeight);
+var vPlayerSpeed = new Vec(0, 0);
+
+var playerAngle = 0;
+
+function handleMouseMoved(e)
+{
+    vMouse.set(e.pageX / clientWidth, e.pageY / clientHeight);
+    vDirMouse = vPlayer.vectorTo(vMouse);
+    vDirMouse.normalize();
+    playerAngle = vDirMouse.angle();
+}
+
+function handleMouseDown(e)
+{
     isMouseDown = true;
     soundMainTheme.play();
 }
 
+const splitOutImpulsSpeed = 20;
+
 function handleMouseUp(e){
-    xMouseUp = e.pageX;
-    yMouseUp = e.pageY;
+    var xMouseUp = e.pageX;
+    var yMouseUp = e.pageY;
     isMouseDown = false;
     soundTestAction.play();
     vMouseUp.set(xMouseUp / clientWidth, yMouseUp / clientHeight);
+    
+    vPlayer = new Vec(player.pos[0] / clientWidth, player.pos[1] / clientHeight);
+    vDirMouseUp = vPlayer.vectorTo(vMouseUp);
+    vDirMouseUp.normalize();
+
+
+    var vDirSpeed = vDirMouseUp.negative();
+    vDirSpeed.multiply(splitOutImpulsSpeed);
+    vPlayerSpeed.add(vDirSpeed);
+
+    eatBalls.push(new EatBall([camera.pos.x + canvas.width / 2, camera.pos.y + canvas.height / 2], vMouseUp, ballStartSpeed));
+
+    vLastMouseUp = vMouseUp.copy();
+    // vDir = vDir.negative();
+    // player.pos[0] += playerSpeed * dt * (vDir.x);
+    // player.pos[1] += playerSpeed * dt * (vDir.y);
 }
 
 var zoomRate = 0.0;
@@ -72,7 +112,7 @@ function main() {
 };
 
 function init() {
-    terrainPattern = ctx.createPattern(resources.get('img/terrain.png'), 'repeat');
+   // terrainPattern = ctx.createPattern(resources.get('img/terrain.png'), 'repeat');
 
     reset();
     lastTime = Date.now();
@@ -81,18 +121,17 @@ function init() {
 
 resources.load([
     'img/sprites.png',
-    'img/terrain.png'
+    'img/terrain.png',
+    'img/filterTest.png',
+    'img/treug.png',
+    'img/circle.png'
 ]);
 
 resources.onReady(init);
 
 // Game state
-var player = {
-    pos: [0, 0],
-    sprite: new Sprite('img/sprites.png', [0, 0], [39, 39], 16, [0, 1])
-};
 
-var bullets = [];
+var eatBalls = [];
 var enemies = [];
 
 var lastFire = Date.now();
@@ -104,31 +143,63 @@ var score = 0;
 var scoreEl = document.getElementById('score');
 
 // Speed in pixels per second
-var playerSpeed = 200;
-var bulletSpeed = 500;
+//var playerSpeed = 0;
+var ballStartSpeed = 500;
 var enemySpeed = 100;
 
 const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
+const speedReductionPercent = 1.025;
+
+function zoomToCenter(scale){
+    ctx.scale(1 + scale, 1 + scale);
+    ctx.translate(-scale / 2 * canvas.width, -scale / 2 * canvas.height);
+};
+
+
+// var bg = {
+// 	src:new Image(),
+//   width: canvas.width,
+//   height:canvas.height
+//   }
+// bg.src.src = "https://st2.depositphotos.com/5479200/11515/v/950/depositphotos_115151592-stock-illustration-forest-game-background-2d-application.jpg";
+
+
+// var testFilter = {
+// 	src:new Image(),
+//   width: canvas.width,
+//   height:canvas.height
+//   }
+//   testFilter.src.src = "img/filterTest.png";
+
+// function drawBg(){	
+//     var xBg = Math.floor(camera.pos.x / bg.width ) * bg.width - camera.pos.x % bg.width;
+//     var yBg = Math.floor(camera.pos.y / bg.height ) * bg.height - camera.pos.y % bg.height;
+//     ctx.drawImage(bg.src, 0, 0, bg.width, bg.height);
+//   }
 
 // Update game objects
 function update(dt) {
+
     gameTime += dt;
-    
     // vPlayer = new Vec(player.pos[0] / clientWidth, player.pos[1] / clientHeight);
     // vDir = vPlayer.vectorTo(vMouseUp);
     // vDir.normalize();
     // vDir = vDir.negative();
-    // player.pos[0] += playerSpeed * dt * (vDir.x);
-    // player.pos[1] += playerSpeed * dt * (vDir.y);
-    
 
+    camera.pos.add(vPlayerSpeed);
+
+    //camera.pos.x += playerSpeed * dt * (vDirMouseUp.x);
+    //camera.pos.y += playerSpeed * dt * (vDirMouseUp.y);
+
+    vPlayerSpeed.div(speedReductionPercent); 
 
     if (isMouseDown){
         if (zoomRate < 0.25){
             var zoomPerSecondSpeed = zoomSpeed * dt;
             zoomRate += zoomPerSecondSpeed;
-            ctx.scale(1 + zoomPerSecondSpeed, 1 + zoomPerSecondSpeed);
+            zoomToCenter(zoomPerSecondSpeed);
+            
         }
 
         if (soundMainTheme.playbackRate > 0.1){
@@ -143,10 +214,12 @@ function update(dt) {
     } else{
         
         if (zoomRate > 0){
-            var speedToBackUp = zoomSpeed * dt * slowmoCoefficient;
+            var speedToBackUp = zoomSpeed * dt * 2 * slowmoCoefficient;
+            if (zoomRate < speedToBackUp){
+                speedToBackUp = zoomRate;
+            }
             zoomRate -= speedToBackUp;
-            ctx.scale(1 - speedToBackUp, 1 - speedToBackUp);
-            
+            zoomToCenter(-speedToBackUp);
             if (soundMainTheme.playbackRate + 0.1 < 1){
                 soundMainTheme.playbackRate += 0.1;
                 soundMainTheme.volume += 0.1;
@@ -156,6 +229,7 @@ function update(dt) {
                 slowmoCoefficient -= deltaSlowMo;
             }
         } else{
+            
             zoomRate = 0;
             slowmoCoefficient = 1;
             soundMainTheme.playbackRate = 1;
@@ -204,46 +278,50 @@ function handleInput(dt) {
         var x = player.pos[0] + player.sprite.size[0] / 2;
         var y = player.pos[1] + player.sprite.size[1] / 2;
 
-        bullets.push({ pos: [x, y],
-                       dir: 'forward',
-                       sprite: new Sprite('img/sprites.png', [0, 39], [18, 8]) });
-        bullets.push({ pos: [x, y],
-                       dir: 'up',
-                       sprite: new Sprite('img/sprites.png', [0, 50], [9, 5]) });
-        bullets.push({ pos: [x, y],
-                       dir: 'down',
-                       sprite: new Sprite('img/sprites.png', [0, 60], [9, 5]) });
+        // eatBall.push({ pos: [x, y],
+        //                dir: 'forward',
+        //                sprite: new Sprite('img/circle.png', [0, 0], [32, 32]) });
+        // eatBall.push({ pos: [x, y],
+        //                dir: 'up',
+        //                sprite: new Sprite('img/circle.png', [0, 0], [32, 32]) });
+        // eatBall.push({ pos: [x, y],
+        //                dir: 'down',
+        //                sprite: new Sprite('img/circle.png', [0, 0], [32, 32]) });
 
         lastFire = Date.now();
     }
 }
 
 function updateEntities(dt) {
+    
     // Update the player sprite animation
     player.sprite.update(dt);
 
     // Update all the bullets
-    for(var i=0; i<bullets.length; i++) 
+    for(var i=0; i<eatBalls.length; i++) 
     {
-        var bullet = bullets[i];
+        var ball = eatBalls[i];
 
-        switch(bullet.dir)
+        switch(ball.dir)
         {
-            case 'up': bullet.pos[1] -= bulletSpeed * dt; break;
-            case 'down': bullet.pos[1] += bulletSpeed * dt; break;
+            case 'up': ball.pos[1] -= ballStartSpeed * dt; break;
+            case 'down': ball.pos[1] += ballStartSpeed * dt; break;
             default:
-                bullet.pos[0] += bulletSpeed * dt;
+                ball.pos[0] += ball.dir.x * ball.speed * dt;
+                ball.pos[1] += ball.dir.y * ball.speed * dt;
+                ball.speed /= speedReductionPercent;
         }
 
         // Remove the bullet if it goes offscreen
-        if(bullet.pos[1] < camera.pos.y - canvas.height / 2 ||
-            bullet.pos[1] > camera.pos.y + canvas.height / 2 ||
-            bullet.pos[0] < camera.pos.x - canvas.width / 2 ||
-            bullet.pos[0] > camera.pos.x + canvas.width / 2)
-        {
-            bullets.splice(i, 1);
-            i--;
-        }
+        // if(bullet.pos[1] < camera.pos.y - canvas.height / 2 ||
+        //     bullet.pos[1] > camera.pos.y + canvas.height / 2 ||
+        //     bullet.pos[0] < camera.pos.x - canvas.width / 2 ||
+        //     bullet.pos[0] > camera.pos.x + canvas.width / 2)
+        // {
+        //     // eatBalls.splice(i, 1);
+        //     i--;
+   
+        // }
     }
 
     // Update all the enemies
@@ -284,9 +362,9 @@ function checkCollisions() {
 
         var size = enemies[i].sprite.size;
 
-        for(var j=0; j<bullets.length; j++) {
-            var pos2 = bullets[j].pos;
-            var size2 = bullets[j].sprite.size;
+        for(var j = 0; j < eatBalls.length; j++) {
+            var pos2 = eatBalls[j].pos;
+            var size2 = eatBalls[j].sprite.size;
 
             if(boxCollides(enemyPos, size, pos2, size2)) {
                 // Remove the enemy
@@ -309,7 +387,7 @@ function checkCollisions() {
                 // });
 
                 // Remove the bullet and stop this iteration
-                bullets.splice(j, 1);
+                eatBalls.splice(j, 1);
                 break;
             }
         }
@@ -338,43 +416,75 @@ function checkPlayerBounds() {
     }
 }
 
+function renderSlowMoEdges(){
+   
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.height / 2, 0, 2 * Math.PI, false);
+    
+    ctx.fillStyle = "rgba(0,0,0,0)";
+    ctx.lineWidth = 200;
+    ctx.strokeStyle = "rgba(0,0,0," + (slowmoCoefficient - 1) / 6 + ")";
+
+    ctx.stroke();
+   
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, 2 * Math.PI, false);
+    
+    ctx.fillStyle = "rgba(0,0,0,0)";
+    ctx.lineWidth = 200;
+    ctx.strokeStyle = "rgba(0,0,0," + (slowmoCoefficient - 1) / 3 + ")";
+
+    ctx.stroke();
+  
+}
+
 // Draw everything
 function render() {
-    ctx.fillStyle = terrainPattern;
+    ctx.fillStyle = '#a0a0a0';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    if (slowmoCoefficient != 1)
+    {
+        renderSlowMoEdges();
+    }
+    // if (slowmoCoefficient != 1){
+    //     ctx.drawImage(testFilter.src, 0, 0, canvas.width, canvas.height);
+    // }
+
+
     // Render the player if the game isn't over
-    if(!isGameOver) {
-        renderEntity(player);
+    if(!isGameOver) 
+    {
+        renderEntity(player, playerAngle);
     }
 
-    renderEntities(bullets);
+    renderEntitiesRelativeCamera(eatBalls);
     renderEntitiesRelativeCamera(enemies);
 };
 
 function renderEntities(list){
     for(var i=0; i<list.length; i++) {
-        renderEntity(list[i]);
+        renderEntity(list[i], null);
     }   
 }
 
 function renderEntitiesRelativeCamera(list) {
-    for(var i=0; i<list.length; i++) {
+    for(var i = 0; i < list.length; i++) {
         renderEntityRelativeCamera(list[i]);
     }    
 }
 
-function renderEntity(entity){
+function renderEntity(entity, angle){
     ctx.save();
     ctx.translate(entity.pos[0], entity.pos[1]);
-    entity.sprite.render(ctx);
+    entity.sprite.render(ctx, angle);
     ctx.restore();
 }
 
 function renderEntityRelativeCamera(entity) {
     ctx.save();
     ctx.translate(entity.pos[0] - camera.pos.x, entity.pos[1] - camera.pos.y);
-    entity.sprite.render(ctx);
+    entity.sprite.render(ctx, null);
     ctx.restore();
 }
 
@@ -390,7 +500,7 @@ function reset() {
     score = 0;
 
     enemies = [];
-    bullets = [];
+    eatBalls = [];
 
-    player.pos = [clientWidth / 2, clientHeight / 2];
+    player.pos = [clientWidth / 2 - player.sprite.size[0] / 2, clientHeight / 2 - player.sprite.size[1] / 2];
 };
