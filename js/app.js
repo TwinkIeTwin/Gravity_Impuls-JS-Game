@@ -43,7 +43,7 @@ camera.pos.set(0, 0);
 
 var player = {
     pos: new Vec(camera.pos.x, camera.pos.y),
-    sprite: new Sprite('img/player.png', new Vec(0, 0), new Vec(0, 0), 0, [0])
+    sprite: new Sprite('img/player.png', new Vec(0, 0), new Vec(86, 86), 0, [0])
 };
 
 var isMouseDown = false;
@@ -67,6 +67,7 @@ var lastTime;
 var eatBalls = [];
 var enemies = [];
 var explosions = [];
+var borders = []
 
 var lastFire = Date.now();
 var gameTime = 0;
@@ -123,6 +124,7 @@ function handleMouseUp(e){
 
 function main() {
     var now = Date.now();
+
     // speed per second
     var dt = ((now - lastTime) / 1000.0) / slowmoCoefficient;
 
@@ -131,7 +133,6 @@ function main() {
         update(dt);
         render();
     }
-    handleInput(dt);
 
     lastTime = now;
     requestAnimFrame(main);
@@ -152,7 +153,8 @@ resources.load([
     'img/filterTest.png',
     'img/treug.png',
     'img/circle.png',
-    'img/player.png'
+    'img/player.png',
+    'img/border-line.png'
 ]);
 
 // var buttonStart = document.getElementById("buttonStartGame");
@@ -198,20 +200,13 @@ function zoomToCenter(scale){
 //     ctx.drawImage(bg.src, 0, 0, bg.width, bg.height);
 //   }
 
-// Update game objects
 function update(dt) 
 {
     gameTime += dt;
-    // vPlayer = new Vec(player.pos[0] / clientWidth, player.pos[1] / clientHeight);
-    // vDir = vPlayer.vectorTo(vMouseUp);
-    // vDir.normalize();
-    // vDir = vDir.negative();
 
     camera.pos.add(vPlayerSpeed);
     player.pos.add(vPlayerSpeed);
 
-    //camera.pos.x += playerSpeed * dt * (vDirMouseUp.x);
-    //camera.pos.y += playerSpeed * dt * (vDirMouseUp.y);
     vPlayerSpeed.div(speedReductionPercent); 
 
     if (isMouseDown)
@@ -244,8 +239,10 @@ function update(dt)
             {
                 speedToBackUp = zoomRate;
             }
+
             zoomRate -= speedToBackUp;
             zoomToCenter(-speedToBackUp);
+
             if (soundMainTheme.playbackRate + 0.1 < 1)
             {
                 soundMainTheme.playbackRate += 0.1;
@@ -265,18 +262,19 @@ function update(dt)
             soundMainTheme.volume = 1;
         }
     }
+
     updateEntities(dt);
 
-    if(Math.random() < 1 - Math.pow(.993, gameTime)) 
-    {
-        enemies.push({
-            pos: new Vec(canvas.width + camera.pos.x,
-                   Math.random() * (canvas.height + camera.pos.y - 39)),
-            angle: 0,
-            sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
-                               0, [0])
-        });
-    }
+    // if(Math.random() < 1 - Math.pow(.993, gameTime)) 
+    // {
+    //     enemies.push({
+    //         pos: new Vec(canvas.width + camera.pos.x,
+    //                Math.random() * (canvas.height + camera.pos.y - 39)),
+    //         angle: 0,
+    //         sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
+    //                            0, [0])
+    //     });
+    // }
 
     checkCollisions();
 
@@ -299,48 +297,6 @@ function handleKeyUp(e)
         } else{
             soundMainTheme.play();
         }
-    }
-}
-
-function handleInput(dt) {
-    if(input.isDown('DOWN') || input.isDown('s')) 
-    {
-       //player.pos[1] += playerSpeed * dt;
-        camera.pos.y += playerSpeed * dt;
-    }
-
-    if(input.isDown('UP') || input.isDown('w')) 
-    {
-        camera.pos.y -= playerSpeed * dt;
-    }
-
-    if(input.isDown('LEFT') || input.isDown('a'))
-    {
-        camera.pos.x -= playerSpeed * dt;
-    }
-
-    if(input.isDown('RIGHT') || input.isDown('d')) 
-    {
-        camera.pos.x += playerSpeed * dt;
-    }
-
-    if(input.isDown('SPACE') &&
-       !isGameOver &&
-       Date.now() - lastFire > 100) {
-        var x = player.pos.x + player.sprite.size.x / 2;
-        var y = player.pos.y + player.sprite.size.y / 2;
-
-        // eatBall.push({ pos: [x, y],
-        //                dir: 'forward',
-        //                sprite: new Sprite('img/circle.png', [0, 0], [32, 32]) });
-        // eatBall.push({ pos: [x, y],
-        //                dir: 'up',
-        //                sprite: new Sprite('img/circle.png', [0, 0], [32, 32]) });
-        // eatBall.push({ pos: [x, y],
-        //                dir: 'down',
-        //                sprite: new Sprite('img/circle.png', [0, 0], [32, 32]) });
-
-        lastFire = Date.now();
     }
 }
 
@@ -401,16 +357,16 @@ function updateEntities(dt)
     }
 }
 
-function collides(x, y, r, b, x2, y2, r2, b2) 
+function collides(x1, y1, w1, h1, x2, y2, w2, h2) 
 {
-    return !(r <= x2 || x > r2 ||
-             b <= y2 || y > b2);
+    return !(w1 <= x2 || x1 > w2 ||
+             h1 <= y2 || y1 > h2);
 }
 
-function boxCollides(pos, size, pos2, size2) 
+function boxCollides(pos1, size1, pos2, size2) 
 {
-    return collides(pos.x, pos.y,
-                    pos.x + size.x, pos.y + size.y,
+    return collides(pos1.x, pos1.y,
+                    pos1.x + size1.x, pos1.y + size1.y,
                     pos2.x, pos2.y,
                     pos2.x + size2.x, pos2.y + size2.y);
 }
@@ -463,6 +419,14 @@ function checkCollisions()
         }
     }
 
+    // border collision 
+    for (var i = 0; i < borders.length; i++)
+    {
+        if (boxCollides(borders[i].pos, borders[i].sprite.size, player.pos, player.sprite.size))
+        {
+            vPlayerSpeed = vPlayerSpeed.negative();
+        }
+    }
 }
 
 function checkPlayerBounds() 
@@ -521,9 +485,10 @@ function render()
     //     ctx.drawImage(testFilter.src, 0, 0, canvas.width, canvas.height);
     // }
 
+    renderEntitiesRelativeCamera(explosions);
     renderEntitiesRelativeCamera(eatBalls);
     renderEntitiesRelativeCamera(enemies);
-    renderEntitiesRelativeCamera(explosions);
+    
 
     if(!isGameOver) 
     {
@@ -532,6 +497,8 @@ function render()
         renderEntity(player, playerAngle);
         player.pos = playerPos;
     }
+
+    renderEntitiesRelativeCamera(borders);
 };
 
 function renderEntities(list)
@@ -583,6 +550,33 @@ function reset()
     enemies = [];
     eatBalls = [];
     explosions = [];
+    borders = []
+    var startX = -1000;
+    var startY = -1000;
+    var endX = 1000;
+    var endY = 1000;
+
+    for (var borderX = startX; borderX < endX; borderX += 100)
+    {
+        borders.push({pos: new Vec(borderX, startY),
+            angle: 0,
+            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+    
+        borders.push({pos: new Vec(borderX, endY),
+            angle: 0,
+            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+    }
+
+    for (var borderY = startY; borderY < endY; borderY += 100)
+    {
+        borders.push({pos: new Vec(startX, borderY),
+            angle: Math.PI / 2,
+            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+    
+        borders.push({pos: new Vec(endX, borderY),
+            angle: Math.PI / 2,
+            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+    }
 
     player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
 };
