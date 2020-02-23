@@ -62,11 +62,11 @@ var playerAngle = 0;
 var zoomRate = 0.0;
 var slowmoCoefficient = 1;
 
-// The main game loop
 var lastTime;
 
 var eatBalls = [];
 var enemies = [];
+var explosions = [];
 
 var lastFire = Date.now();
 var gameTime = 0;
@@ -278,7 +278,7 @@ function update(dt)
         });
     }
 
-    //checkCollisions();
+    checkCollisions();
 
     scoreEl.innerHTML = score;
     
@@ -389,9 +389,17 @@ function updateEntities(dt)
         //     i--;
         // }
     }
-}
 
-// Collisions
+    for(var i = 0; i<explosions.length; i++) {
+        explosions[i].sprite.update(dt);
+
+        // Remove if animation is done
+        if(explosions[i].sprite.done) {
+            explosions.splice(i, 1);
+            i--;
+        }
+    }
+}
 
 function collides(x, y, r, b, x2, y2, r2, b2) 
 {
@@ -410,22 +418,18 @@ function boxCollides(pos, size, pos2, size2)
 function checkCollisions() 
 {
     checkPlayerBounds();
-    
-    // Run collision detection for all enemies and bullets
-    for(var i=0; i<enemies.length; i++) 
+
+    for(var i = 0; i < enemies.length; i++) 
     {
         var enemyPos = enemies[i].pos;
-        enemyPos.x += camera.pos.x;
-        enemyPos.y += camera.pos.y;
-
-        var size = enemies[i].sprite.size;
+        var enemySize = enemies[i].sprite.size;
 
         for(var j = 0; j < eatBalls.length; j++) 
         {
-            var pos2 = eatBalls[j].pos;
-            var size2 = eatBalls[j].sprite.size;
+            var posBall = eatBalls[j].pos;
+            var sizeBall = eatBalls[j].sprite.size;
 
-            if(boxCollides(enemyPos, size, pos2, size2)) 
+            if(boxCollides(enemyPos, enemySize, posBall, sizeBall)) 
             {
                 // Remove the enemy
                 enemies.splice(i, 1);
@@ -435,16 +439,17 @@ function checkCollisions()
                 score += 1;
 
                 // Add an explosion
-                // explosions.push({
-                //     pos: pos,
-                //     sprite: new Sprite('img/sprites.png',
-                //                        [0, 117],
-                //                        [39, 39],
-                //                        16,
-                //                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                //                        null,
-                //                        true)
-                // });
+                 explosions.push({
+      
+                     pos: enemyPos,
+                     sprite: new Sprite('img/sprites.png',
+                                        new Vec(0, 117),
+                                        new Vec(39, 39),
+                                        16,
+                                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                                        null,
+                                        true)
+                 });
 
                 // Remove the bullet and stop this iteration
                 eatBalls.splice(j, 1);
@@ -452,7 +457,7 @@ function checkCollisions()
             }
         }
 
-        if(boxCollides(enemyPos, size, player.pos, player.sprite.size)) 
+        if(boxCollides(enemyPos, enemySize, player.pos, player.sprite.size)) 
         {
             gameOver();
         }
@@ -518,6 +523,7 @@ function render()
 
     renderEntitiesRelativeCamera(eatBalls);
     renderEntitiesRelativeCamera(enemies);
+    renderEntitiesRelativeCamera(explosions);
 
     if(!isGameOver) 
     {
@@ -576,6 +582,7 @@ function reset()
 
     enemies = [];
     eatBalls = [];
+    explosions = [];
 
     player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
 };
