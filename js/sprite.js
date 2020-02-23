@@ -34,29 +34,29 @@
             }
 
 
-            var x = this.pos[0];
-            var y = this.pos[1];
+            var x = this.pos.x;
+            var y = this.pos.y;
 
             if(this.dir == 'vertical') {
-                y += frame * this.size[1];
+                y += frame * this.size.y;
             }
             else {
-                x += frame * this.size[0];
+                x += frame * this.size.x;
             }
 
             if (typeof angle == 'number'){
 
                 this.drawRotatedImage(ctx, resources.get(this.url),
-                          x + this.size[0] / 2, y + this.size[1] / 2,
+                          x + this.size.x / 2, y + this.size.y / 2,
                           angle);
         }
         else
         {
             ctx.drawImage(resources.get(this.url),
             x, y,
-            this.size[0], this.size[1],
+            this.size.x, this.size.y,
             0, 0,
-            this.size[0], this.size[1]);
+            this.size.x, this.size.y);
 
         }
     },

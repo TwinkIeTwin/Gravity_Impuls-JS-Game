@@ -3,7 +3,7 @@ class EatBall {
         this.pos = pos;
         this.dir = dir;
         this.speed = speed;
-        this.sprite = new Sprite('img/circle.png', [0, 0], [32, 32], 0, [0])
+        this.sprite = new Sprite('img/circle.png', new Vec(0, 0), new Vec(32, 32), 0, [0])
     }
 
     // render(ctx, angle){
