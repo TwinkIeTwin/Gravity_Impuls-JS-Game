@@ -1,17 +1,21 @@
 
 (function() {
-    var resourceCache = {};
-    var loading = [];
-    var readyCallbacks = [];
+    let resourceCache = {};
+    let readyCallbacks = [];
+    let progressBar = document.getElementById("loadProgress");
+    let countOfLoaded = 0;
+    let countToLoad;
 
     // Load an image url or an array of image urls
     function load(urlOrArr) {
         if(urlOrArr instanceof Array) {
+            countToLoad = urlOrArr.length;
             urlOrArr.forEach(function(url) {
                 _load(url);
             });
         }
         else {
+            countToLoad
             _load(urlOrArr);
         }
     }
@@ -21,8 +25,11 @@
             return resourceCache[url];
         }
         else {
-            var img = new Image();
+            let img = new Image();
             img.onload = function() {
+                countOfLoaded++;
+                progressBar.setAttribute("value", countOfLoaded / countToLoad);
+                
                 resourceCache[url] = img;
                 
                 if(isReady()) {
@@ -39,8 +46,8 @@
     }
 
     function isReady() {
-        var ready = true;
-        for(var k in resourceCache) {
+        let ready = true;
+        for(let k in resourceCache) {
             if(resourceCache.hasOwnProperty(k) &&
                !resourceCache[k]) {
                 ready = false;

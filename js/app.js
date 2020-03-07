@@ -1,6 +1,43 @@
 
+//let progress = document.getElementById("loadProgress");
+let buttonStartGame = document.getElementById("buttonStartGame");
+
+resources.load([
+    'img/sprites.png',
+    'img/terrain.png',
+    'img/filterTest.png',
+    'img/treug.png',
+    'img/circle.png',
+    'img/player.png',
+    'img/border-line.png'
+]);
+
+//progress.setAttribute("value", 60);
+
+function showButtonStartGame()
+{
+    buttonStartGame.removeAttribute("hidden", true);
+    buttonStartGame.removeAttribute("disabled", true);
+    buttonStartGame.addEventListener("click", function(e){
+        
+        startGame();
+    })
+}
+
+resources.onReady(showButtonStartGame);
+// while (true){
+
+// }
+
+//resources.onReady(init);
+
+//kek();
+
+function startGame()
+{
 // A cross-browser requestAnimationFrame
-var requestAnimFrame = (function(){
+let requestAnimFrame = (function()
+{
     return window.requestAnimationFrame    ||
         window.webkitRequestAnimationFrame ||
         window.mozRequestAnimationFrame    ||
@@ -11,23 +48,23 @@ var requestAnimFrame = (function(){
         };
 })();
 
-var soundMainTheme = new Audio('sound/Fone.mp3');
+let soundMainTheme = new Audio('sound/Fone.mp3');
 
-var soundTestAction = new Audio('sound/testAction.mp3')
+let soundTestAction = new Audio('sound/testAction.mp3')
 
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
+let canvas = document.createElement("canvas");
+let ctx = canvas.getContext("2d");
 
 ctx.mozImageSmoothingEnabled = false;
 ctx.webkitImageSmoothingEnabled = false;
 ctx.msImageSmoothingEnabled = false;
 ctx.imageSmoothingEnabled = false;
 
-var clientWidth = window.innerWidth
+let clientWidth = window.innerWidth
 || document.documentElement.clientWidth
 || document.body.clientWidth;
 
-var clientHeight = window.innerHeight
+let clientHeight = window.innerHeight
 || document.documentElement.clientHeight
 || document.body.clientHeight;
 
@@ -41,50 +78,51 @@ canvas.addEventListener("mousemove", handleMouseMoved);
 
 camera.pos.set(0, 0);
 
-var player = {
+let player = {
     pos: new Vec(camera.pos.x, camera.pos.y),
     sprite: new Sprite('img/player.png', new Vec(0, 0), new Vec(86, 86), 0, [0])
 };
 
-var isMouseDown = false;
+let isMouseDown = false;
 
-var vMouse = new Vec(0, 0);
-var vDirMouse = new Vec(0, 0);
-var vMouseUp = new Vec(0, 0);
-var vDirMouseUp = new Vec(0, 0);
-var vLastMouseUp = new Vec(0, 0);
-var vPlayer = new Vec(player.pos.x / clientWidth, player.pos.y / clientHeight);
-var vCenterScreen = new Vec(0.5, 0.5);
-var vPlayerSpeed = new Vec(0, 0);
+let vMouse = new Vec(0, 0);
+let vDirMouse = new Vec(0, 0);
+let vMouseUp = new Vec(0, 0);
+let vDirMouseUp = new Vec(0, 0);
+let vLastMouseUp = new Vec(0, 0);
+let vPlayer = new Vec(player.pos.x / clientWidth, player.pos.y / clientHeight);
+let vCenterScreen = new Vec(0.5, 0.5);
+let vPlayerSpeed = new Vec(0, 0);
 
-var playerAngle = 0;
+let playerAngle = 0;
 
-var zoomRate = 0.0;
-var slowmoCoefficient = 1;
+let zoomRate = 0.0;
+let slowmoCoefficient = 1;
 
-var lastTime;
+let lastTime;
 
-var eatBalls = [];
-var enemies = [];
-var explosions = [];
-var borders = []
+let eatBalls = [];
+let enemies = [];
+let explosions = [];
+let borders = []
 
-var lastFire = Date.now();
-var gameTime = 0;
-var isGameOver;
-var isPaused = false;
-var terrainPattern;
+let lastFire = Date.now();
+let gameTime = 0;
+let isGameOver;
+let isPaused = false;
+let terrainPattern;
 
-var score = 0;
-var scoreEl = document.getElementById('score');
+let score = 0;
 
-var ballStartSpeed = 750;
-var enemySpeed = 500;
+let ballStartSpeed = 750;
+let enemySpeed = 500;
 
 const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
 const speedReductionPercent = 1.025;
 const splitOutImpulsSpeed = 20;
+
+init();
 
 function handleMouseMoved(e)
 {
@@ -103,8 +141,8 @@ function handleMouseDown(e)
 }
 
 function handleMouseUp(e){
-    var xMouseUp = e.pageX;
-    var yMouseUp = e.pageY;
+    let xMouseUp = e.pageX;
+    let yMouseUp = e.pageY;
     isMouseDown = false;
     soundTestAction.play();
     vMouseUp.set(xMouseUp / clientWidth, yMouseUp / clientHeight);
@@ -113,7 +151,7 @@ function handleMouseUp(e){
     vDirMouseUp = vCenterScreen.vectorTo(vMouseUp);
     vDirMouseUp.normalize();
 
-    var vDirSpeed = vDirMouseUp.negative();
+    let vDirSpeed = vDirMouseUp.negative();
     vDirSpeed.multiply(splitOutImpulsSpeed);
     vPlayerSpeed.add(vDirSpeed);
 
@@ -123,10 +161,10 @@ function handleMouseUp(e){
 }
 
 function main() {
-    var now = Date.now();
+    let now = Date.now();
 
     // speed per second
-    var dt = ((now - lastTime) / 1000.0) / slowmoCoefficient;
+    let dt = ((now - lastTime) / 1000.0) / slowmoCoefficient;
 
     if (!isPaused)
     {
@@ -141,33 +179,26 @@ function main() {
 function init() {
    // terrainPattern = ctx.createPattern(resources.get('img/terrain.png'), 'repeat');
     // if (isResourcesLoaded){
+        soundMainTheme.play();
         reset();
         lastTime = Date.now();
         main();
     // }
 }
 
-resources.load([
-    'img/sprites.png',
-    'img/terrain.png',
-    'img/filterTest.png',
-    'img/treug.png',
-    'img/circle.png',
-    'img/player.png',
-    'img/border-line.png'
-]);
 
-// var buttonStart = document.getElementById("buttonStartGame");
+
+// let buttonStart = document.getElementById("buttonStartGame");
 // buttonStart.addEventListener("click", handleStartGame);
 
-// var isResourcesLoaded = false;
+// let isResourcesLoaded = false;
 
 // function handleStartGame(e){
 //     alert("pressed");
 //     init();
 // }
 
-resources.onReady(init);
+
 
 // function setResourcesLoaded(){
 //     isResourcesLoaded = true;
@@ -179,7 +210,7 @@ function zoomToCenter(scale){
 };
 
 
-// var bg = {
+// let bg = {
 // 	src:new Image(),
 //   width: canvas.width,
 //   height:canvas.height
@@ -187,7 +218,7 @@ function zoomToCenter(scale){
 // bg.src.src = "https://st2.depositphotos.com/5479200/11515/v/950/depositphotos_115151592-stock-illustration-forest-game-background-2d-application.jpg";
 
 
-// var testFilter = {
+// let testFilter = {
 // 	src:new Image(),
 //   width: canvas.width,
 //   height:canvas.height
@@ -195,8 +226,8 @@ function zoomToCenter(scale){
 //   testFilter.src.src = "img/filterTest.png";
 
 // function drawBg(){	
-//     var xBg = Math.floor(camera.pos.x / bg.width ) * bg.width - camera.pos.x % bg.width;
-//     var yBg = Math.floor(camera.pos.y / bg.height ) * bg.height - camera.pos.y % bg.height;
+//     let xBg = Math.floor(camera.pos.x / bg.width ) * bg.width - camera.pos.x % bg.width;
+//     let yBg = Math.floor(camera.pos.y / bg.height ) * bg.height - camera.pos.y % bg.height;
 //     ctx.drawImage(bg.src, 0, 0, bg.width, bg.height);
 //   }
 
@@ -213,7 +244,7 @@ function update(dt)
     {
         if (zoomRate < 0.25)
         {
-            var zoomPerSecondSpeed = zoomSpeed * dt;
+            let zoomPerSecondSpeed = zoomSpeed * dt;
             zoomRate += zoomPerSecondSpeed;
             zoomToCenter(zoomPerSecondSpeed);
         }
@@ -233,7 +264,7 @@ function update(dt)
     {
         if (zoomRate > 0)
         {
-            var speedToBackUp = zoomSpeed * dt * 2 * slowmoCoefficient;
+            let speedToBackUp = zoomSpeed * dt * 2 * slowmoCoefficient;
 
             if (zoomRate < speedToBackUp)
             {
@@ -265,21 +296,18 @@ function update(dt)
 
     updateEntities(dt);
 
-    // if(Math.random() < 1 - Math.pow(.993, gameTime)) 
-    // {
-    //     enemies.push({
-    //         pos: new Vec(canvas.width + camera.pos.x,
-    //                Math.random() * (canvas.height + camera.pos.y - 39)),
-    //         angle: 0,
-    //         sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
-    //                            0, [0])
-    //     });
-    // }
+     if(Math.random() < 1 - Math.pow(.993, gameTime)) 
+     {
+         enemies.push({
+             pos: new Vec(canvas.width + camera.pos.x,
+                    Math.random() * (canvas.height + camera.pos.y - 39)),
+             angle: 0,
+             sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
+                            0, [0])
+         });
+     }
 
     checkCollisions();
-
-    scoreEl.innerHTML = score;
-    
 };
 
 document.addEventListener('keyup', handleKeyUp);
@@ -288,15 +316,7 @@ function handleKeyUp(e)
 {
     if (e.keyCode == 27)
     {
-        isPaused = !isPaused;
-        
-        if (isPaused){
-            ctx.fillStyle = 'rgba(0,0,0,0.25)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            soundMainTheme.pause();
-        } else{
-            soundMainTheme.play();
-        }
+        isPaused ? resumeGame() : pauseGame();
     }
 }
 
@@ -306,11 +326,11 @@ function updateEntities(dt)
     player.sprite.update(dt);
 
     // Update all the bullets
-    for(var i = 0; i < eatBalls.length; i++) 
+    for(let i = 0; i < eatBalls.length; i++) 
     {
-        var ball = eatBalls[i];
+        let ball = eatBalls[i];
 
-        var ballSpeed = new Vec(ball.dir.x, ball.dir.y);
+        let ballSpeed = new Vec(ball.dir.x, ball.dir.y);
         ballSpeed.multiply(ball.speed * dt);
         ball.pos.add(ballSpeed);
         ball.speed /= speedReductionPercent;
@@ -328,10 +348,10 @@ function updateEntities(dt)
     }
 
     // Update all the enemies
-    for(var i = 0; i < enemies.length; i++) 
+    for(let i = 0; i < enemies.length; i++) 
     {
         // move to player
-        var vEnemyDir = enemies[i].pos.vectorTo(player.pos);
+        let vEnemyDir = enemies[i].pos.vectorTo(player.pos);
         vEnemyDir.normalize();
         enemies[i].angle = vEnemyDir.angle();
         enemies[i].pos.add(vEnemyDir.multiply(enemySpeed * dt));
@@ -346,7 +366,7 @@ function updateEntities(dt)
         // }
     }
 
-    for(var i = 0; i<explosions.length; i++) {
+    for(let i = 0; i<explosions.length; i++) {
         explosions[i].sprite.update(dt);
 
         // Remove if animation is done
@@ -357,10 +377,10 @@ function updateEntities(dt)
     }
 }
 
-function collides(x1, y1, w1, h1, x2, y2, w2, h2) 
+function collides(x, y, r, b, x2, y2, r2, b2) 
 {
-    return !(w1 <= x2 || x1 > w2 ||
-             h1 <= y2 || y1 > h2);
+    return !(r <= x2 || x > r2 ||
+             b <= y2 || y > b2);
 }
 
 function boxCollides(pos1, size1, pos2, size2) 
@@ -375,21 +395,23 @@ function checkCollisions()
 {
     checkPlayerBounds();
 
-    for(var i = 0; i < enemies.length; i++) 
+    for(let i = 0; i < enemies.length; i++) 
     {
-        var enemyPos = enemies[i].pos;
-        var enemySize = enemies[i].sprite.size;
+        let enemyPos = enemies[i].pos;
+        let enemySize = enemies[i].sprite.size;
 
-        for(var j = 0; j < eatBalls.length; j++) 
+        for(let j = 0; j < eatBalls.length; j++) 
         {
-            var posBall = eatBalls[j].pos;
-            var sizeBall = eatBalls[j].sprite.size;
+            let posBall = eatBalls[j].pos;
+            let sizeBall = eatBalls[j].sprite.size;
 
             if(boxCollides(enemyPos, enemySize, posBall, sizeBall)) 
             {
                 // Remove the enemy
                 enemies.splice(i, 1);
                 i--;
+
+                new Audio('sound/triangle-dead.mp3').play();
 
                 // Add score
                 score += 1;
@@ -399,15 +421,14 @@ function checkCollisions()
       
                      pos: enemyPos,
                      sprite: new Sprite('img/sprites.png',
-                                        new Vec(0, 117),
-                                        new Vec(39, 39),
-                                        16,
-                                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                                        null,
-                                        true)
+                        new Vec(0, 117),
+                        new Vec(39, 39),
+                        16,
+                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                        null,
+                        true)
                  });
 
-                // Remove the bullet and stop this iteration
                 eatBalls.splice(j, 1);
                 break;
             }
@@ -420,11 +441,12 @@ function checkCollisions()
     }
 
     // border collision 
-    for (var i = 0; i < borders.length; i++)
+    for (let i = 0; i < borders.length; i++)
     {
         if (boxCollides(borders[i].pos, borders[i].sprite.size, player.pos, player.sprite.size))
         {
             vPlayerSpeed = vPlayerSpeed.negative();
+            new Audio('sound/smash.mp3').play();
         }
     }
 }
@@ -477,6 +499,18 @@ function render()
     ctx.fillStyle = '#a0a0a0';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    if (isPaused)
+    {
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    if (isGameOver)
+    {
+        ctx.fillStyle = 'rgba(255,0,0,0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     if (slowmoCoefficient != 1)
     {
         renderSlowMoEdges();
@@ -492,8 +526,8 @@ function render()
 
     if(!isGameOver) 
     {
-        var playerPos =  new Vec(player.pos.x, player.pos.y);
-        player.pos = new Vec(canvas.width / 2, canvas.height / 2);
+        let playerPos =  new Vec(player.pos.x, player.pos.y);
+        player.pos = new Vec(canvas.width / 2 - player.sprite.size.x / 2, canvas.height / 2 - player.sprite.size.y / 2);
         renderEntity(player, playerAngle);
         player.pos = playerPos;
     }
@@ -503,7 +537,7 @@ function render()
 
 function renderEntities(list)
 {
-    for(var i=0; i<list.length; i++) 
+    for(let i=0; i<list.length; i++) 
     {
         renderEntity(list[i], null);
     }   
@@ -511,7 +545,7 @@ function renderEntities(list)
 
 function renderEntitiesRelativeCamera(list) 
 {
-    for(var i = 0; i < list.length; i++) 
+    for(let i = 0; i < list.length; i++) 
     {
         renderEntityRelativeCamera(list[i]);
     }    
@@ -533,10 +567,27 @@ function renderEntityRelativeCamera(entity)
     ctx.restore();
 }
 
+function pauseGame()
+{
+    isPaused = true;
+    soundMainTheme.pause();
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function resumeGame()
+{
+    soundMainTheme.play();
+    isPaused = false;
+}
+
 // Game over
 function gameOver() 
 {
+    
+    new Audio('sound/dead.mp3').play();
     isGameOver = true;
+    pauseGame();
 }
 
 // Reset game to original state
@@ -551,32 +602,36 @@ function reset()
     eatBalls = [];
     explosions = [];
     borders = []
-    var startX = -1000;
-    var startY = -1000;
-    var endX = 1000;
-    var endY = 1000;
+    let startX = -1000;
+    let startY = -1000;
+    let endX = 1000;
+    let endY = 1000;
 
-    for (var borderX = startX; borderX < endX; borderX += 100)
-    {
-        borders.push({pos: new Vec(borderX, startY),
-            angle: 0,
-            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+    // for (let borderX = startX; borderX < endX; borderX += 100)
+    // {
+    //     borders.push({pos: new Vec(borderX, startY),
+    //         angle: 0,
+    //         sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
     
-        borders.push({pos: new Vec(borderX, endY),
-            angle: 0,
-            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
-    }
+    //     borders.push({pos: new Vec(borderX, endY),
+    //         angle: 0,
+    //         sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+    // }
 
-    for (var borderY = startY; borderY < endY; borderY += 100)
+    for (let borderY = startY; borderY < endY; borderY += 150)
     {
         borders.push({pos: new Vec(startX, borderY),
-            angle: Math.PI / 2,
+         //   angle: Math.PI / 2,
+         angle : 0,
             sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
     
         borders.push({pos: new Vec(endX, borderY),
-            angle: Math.PI / 2,
-            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
+           // angle: Math.PI / 2,
+           angle: 0, 
+           
+           sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
     }
 
     player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
 };
+}
