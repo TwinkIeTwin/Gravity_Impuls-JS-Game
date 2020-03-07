@@ -121,6 +121,14 @@ const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
 const speedReductionPercent = 1.025;
 const splitOutImpulsSpeed = 20;
+const maxScoreLabelSize = 300;
+const minScoreLabelSize = 200;
+const scoreLabelIncreasing = 200;
+const scoreLabelDecreasing = 50;
+
+let scoreLabelSize = minScoreLabelSize;
+
+let isScoreLabelIncreasing = false;
 
 init();
 
@@ -294,6 +302,35 @@ function update(dt)
         }
     }
 
+    // update score size
+    if (isScoreLabelIncreasing)
+    {
+        let additionalSize = scoreLabelIncreasing * dt;
+        if (scoreLabelSize + additionalSize  < maxScoreLabelSize)
+        {
+            scoreLabelSize += additionalSize;
+        }
+        else
+        {
+            scoreLabelSize = maxScoreLabelSize;
+            isScoreLabelIncreasing = false;
+        }
+    } 
+    else
+    {
+        let additionalSize = scoreLabelDecreasing * dt;
+        if (scoreLabelSize - additionalSize  > minScoreLabelSize)
+        {
+            scoreLabelSize -= additionalSize;
+        }
+        else
+        {
+            scoreLabelSize = minScoreLabelSize;
+        }
+
+    }
+
+
     updateEntities(dt);
 
      if(Math.random() < 1 - Math.pow(.993, gameTime)) 
@@ -414,7 +451,8 @@ function checkCollisions()
                 new Audio('sound/triangle-dead.mp3').play();
 
                 // Add score
-                score += 1;
+                score++;
+                isScoreLabelIncreasing = true;
 
                 // Add an explosion
                  explosions.push({
@@ -533,6 +571,23 @@ function render()
     }
 
     renderEntitiesRelativeCamera(borders);
+
+    // ctx.textAlign = "center";
+
+    // ctx.fillText("center", 250, 20);
+
+    // ctx.fillStyle = "#00F";
+    // ctx.strokeStyle = "#F00";
+    // ctx.font = "italic 30pt Arial";
+    // ctx.fillText("Fill text", 20, 50);
+    // ctx.font = 'bold 30px sans-serif';
+    // ctx.strokeText("Stroke text", 20, 100);
+
+    ctx.font = scoreLabelSize + "% Arial";
+    ctx.strokeStyle = "red";
+    ctx.textAlign = "center"
+    ctx.lineWidth = 2;
+    ctx.strokeText(score, canvas.width / 2, 100);
 };
 
 function renderEntities(list)
