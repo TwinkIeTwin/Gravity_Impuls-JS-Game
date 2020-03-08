@@ -81,13 +81,14 @@ let foneLineY = [];
 let foneLineX = [];
 const foneLinePeriod = 50;
 
+let testZoom = 0;
+
 let menu = document.getElementById("gamePausedMenu");
 document.getElementById("resumeGame").addEventListener("click", resumeGame);
 document.getElementById("restartGame").addEventListener("click", reset);
 
-
 const ballStartSpeed = 750;
-const enemySpeed = 500;
+const enemySpeed = 10;
 const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
 const speedReductionPercent = 1.025;
@@ -102,6 +103,12 @@ let scoreLabelSize = minScoreLabelSize;
 let isScoreLabelIncreasing = false;
 
 let zoomedBySpeed = 0;
+
+let currentXTranslate = 0;
+let currentYTranslate = 0;
+let currentScale = 1;
+
+let isSpeedZoomOut = false;
 
 init();
 
@@ -127,7 +134,6 @@ function handleMouseUp(e){
     isMouseDown = false;
     soundTestAction.play();
     vMouseUp.set(xMouseUp / clientWidth, yMouseUp / clientHeight);
-    
 
     vDirMouseUp = vCenterScreen.vectorTo(vMouseUp);
     vDirMouseUp.normalize();
@@ -158,69 +164,66 @@ function main() {
 };
 
 function init() {
-   // terrainPattern = ctx.createPattern(resources.get('img/terrain.png'), 'repeat');
-    // if (isResourcesLoaded){
-        soundMainTheme.play();
-        reset();
-        lastTime = Date.now();
-        main();
-    // }
+
+    soundMainTheme.play();
+    reset();
+    lastTime = Date.now();
+    main();
 }
 
-
-
-// let buttonStart = document.getElementById("buttonStartGame");
-// buttonStart.addEventListener("click", handleStartGame);
-
-// let isResourcesLoaded = false;
-
-// function handleStartGame(e){
-//     alert("pressed");
-//     init();
-// }
-
-
-
-// function setResourcesLoaded(){
-//     isResourcesLoaded = true;
-// }
-
 function zoomToCenter(scale){
+    currentXTranslate += -scale / 2 * canvas.width;
+    currentYTranslate += -scale / 2 * canvas.height;
+    currentScale += scale;
+    
     ctx.scale(1 + scale, 1 + scale);
     ctx.translate(-scale / 2 * canvas.width, -scale / 2 * canvas.height);
 };
 
-
-// let bg = {
-// 	src:new Image(),
-//   width: canvas.width,
-//   height:canvas.height
-//   }
-// bg.src.src = "https://st2.depositphotos.com/5479200/11515/v/950/depositphotos_115151592-stock-illustration-forest-game-background-2d-application.jpg";
-
-
-// let testFilter = {
-// 	src:new Image(),
-//   width: canvas.width,
-//   height:canvas.height
-//   }
-//   testFilter.src.src = "img/filterTest.png";
-
-// function drawBg(){	
-//     let xBg = Math.floor(camera.pos.x / bg.width ) * bg.width - camera.pos.x % bg.width;
-//     let yBg = Math.floor(camera.pos.y / bg.height ) * bg.height - camera.pos.y % bg.height;
-//     ctx.drawImage(bg.src, 0, 0, bg.width, bg.height);
-//   }
+function ZoomNormalize()
+{
+    ctx.scale(currentScale, currentScale);
+    ctx.translate(-currentXTranslate, -currentYTranslate);
+    currentXTranslate = 0;
+    currentYTranslate = 0;
+    currentScale = 1;
+}
 
 function update(dt) 
 {
+
+    if (vPlayerSpeed.length() - zoomedBySpeed > 0.001 )
+    {    
+        zoomedBySpeed += (vPlayerSpeed.length() - zoomedBySpeed) / 300;
+        testZoom += zoomSpeed * dt;
+        zoomToCenter(-zoomSpeed * dt);
+    }
+    else
+    {
+        if (testZoom > 0)
+        {
+            zoomToCenter(zoomSpeed * dt);
+            testZoom -= zoomSpeed * dt;
+            zoomedBySpeed /= speedReductionPercent;
+        } 
+        else
+        {
+            if (slowmoCoefficient == 1)
+            {
+                ZoomNormalize();
+            }
+
+            zoomedBySpeed /= speedReductionPercent;
+            testZoom = 0;
+        }
+    }
+
     gameTime += dt;
 
     camera.pos.add(vPlayerSpeed);
     player.pos.add(vPlayerSpeed);
 
     updateFoneLines();
-    
 
     vPlayerSpeed.div(speedReductionPercent); 
 
@@ -310,14 +313,41 @@ function update(dt)
 
      if(Math.random() < 1 - Math.pow(.993, gameTime)) 
      {
-         enemies.push({
-             pos: new Vec(canvas.width + camera.pos.x,
-                    Math.random() * (canvas.height + camera.pos.y - 39)),
-             angle: 0,
-             sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
+        let a = parseInt(Math.random() * 4);
+        switch(a){
+            case 0:  enemies.push({
+                pos: new Vec(canvas.width + camera.pos.x,
+                        Math.random() * (canvas.height + camera.pos.y - 78)),
+                angle: 0,
+                sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
+                                0, [0])
+            }); break;
+
+            case 1: enemies.push({
+                pos: new Vec(camera.pos.x - 86,
+                    Math.random() * (canvas.height + camera.pos.y - 78)),
+                angle: 0,
+                sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
                             0, [0])
-         });
-     }
+            }); break;
+
+            case 2: enemies.push({
+                pos: new Vec(Math.random() * (canvas.width + camera.pos.x - 78),
+                canvas.height + camera.pos.y),
+                angle: 0,
+                sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
+                            0, [0])
+            }); break;
+
+            case 3: enemies.push({
+                pos: new Vec(Math.random() * (canvas.width + camera.pos.x - 78),
+                camera.pos.y - 78),
+                angle: 0,
+                sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
+                            0, [0])
+            }); break;
+    }
+    }
 
     checkCollisions();
 };
@@ -559,7 +589,7 @@ function renderSlowMoEdges()
 function render() 
 {
     ctx.fillStyle = '#a0a0a0';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(-1000, -1000, canvas.width + 2000, canvas.height +2000);
 
     if (isPaused)
     {
