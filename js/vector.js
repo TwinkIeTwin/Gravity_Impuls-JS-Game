@@ -66,11 +66,11 @@ Vec.prototype = {
 
     // нормализация вектора (приведение к вектору с длиной = 1)
     normalize: function() {
-        var length = this.length();
+        let length = this.length();
         if (length < Number.MIN_VALUE) {
             return 0.0;
         }
-        var invLength = 1.0 / length;
+        let invLength = 1.0 / length;
         this.x *= invLength;
         this.y *= invLength;
 
@@ -79,12 +79,12 @@ Vec.prototype = {
 
     // получение угла вектора
     angle: function () {
-        var x = this.x;
-        var y = this.y;
+        let x = this.x;
+        let y = this.y;
         if (x == 0) {
             return (y > 0) ? (3 * Math.PI) / 2 : Math.PI / 2;
         }
-        var result = Math.atan(y/x);
+        let result = Math.atan(y/x);
 
         result += Math.PI/2;
         if (x < 0) result = result - Math.PI;
@@ -103,7 +103,7 @@ Vec.prototype = {
 
     // поворот вектора на заданный угл
     rotate: function (angle) {
-        var length = this.length();
+        let length = this.length();
         this.x = Math.sin(angle) * length;
         this.y = Math.cos(angle) * (-length);
         return this;

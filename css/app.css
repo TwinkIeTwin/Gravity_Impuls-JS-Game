@@ -5,6 +5,7 @@ html, body {
 }
 
 canvas {
+    z-index: 0;
     display: block;
     margin: auto;
 
@@ -15,57 +16,31 @@ canvas {
     right: 0;
 }
 
-.wrapper {
-    width: 512px;
-    margin: 0 auto;
+.wrapper
+{
+    width: max-content;
+    height: max-content;
+    margin: auto auto;
     margin-top: 2em;
 }
 
-#instructions {
-    float: left;
-    font-family: sans-serif;
-    color: #757575;
-}
-
-#score {
-    float: right;
-    color: white;
-    font-size: 2em;
-}
-
-.key {
-    color: #aaffdd;
-}
-
-#game-over, #game-over-overlay {
-    margin: auto;
-    width: 512px;
-    height: 480px;
-    position: absolute;
+#gamePausedMenu
+{
+    z-index: 1;
+    /* background-color: red; */
+    position: absolute; 
+    height: 100%;
+    width: 100%;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    display: none;
 }
 
-#game-over-overlay {
-    background-color: black;
-    opacity: .5;
-}
-
-#game-over {
-    height: 200px;
-    text-align: center;
-    color: white;
-}
-
-#game-over h1 {
-    font-size: 3em;
-    font-family: sans-serif;
-}
-
-#game-over button {
-    font-size: 1.5em;
+#mainMenu
+{
+    z-index: 2;
+    position: absolute; 
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
 }

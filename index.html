@@ -10,33 +10,30 @@
     <link rel="stylesheet" href="css/app.css">
   </head>
   <body>
-    <!-- <div id="game-over-overlay">
-    </div> -->
-    
     <div class="wrapper">
-      
       <div>
         <button id="buttonStartGame" disabled hidden>Play</button>
       </div>
-      
       <progress max="1" value="0" id="loadProgress">
-        
       </progress>
-
- 
-
     </div>
+    <canvas id = "canvas"></canvas>
 
-    <!-- <script type="text/javascript" src="js/atom.js"></script>
-    <script type="text/javascript" src="js/libcanvas.js"></script> -->
-    <script type="text/javascript" src="js/spine.js"></script>
+  <div id = "gamePausedMenu" hidden>
+    <button id = "resumeGame">Resume</button>
+    <button id = "restartGame">Restart</button>
+    <form action="MainMenu.html">
+      <button type="submit">To Main Menu</button>
+  </form>
+  </div>
+
     <script type="text/javascript" src="js/resources.js"></script>
     <script type="text/javascript" src="js/input.js"></script>
     <script type="text/javascript" src="js/vector.js"></script>
     <script type="text/javascript" src="js/eatBall.js"></script>
     <script type="text/javascript" src="js/camera.js"></script>
     <script type="text/javascript" src="js/sprite.js"></script>
-    
     <script type="text/javascript" src="js/app.js"></script>
+    <script type="text/javascript" src="js/resourcePreload.js"></script>
   </body>
 </html>

@@ -17,11 +17,11 @@
         },
 
         render: function(ctx, angle) {
-            var frame;
+            let frame;
 
             if(this.speed > 0) {
-                var max = this.frames.length;
-                var idx = Math.floor(this._index);
+                let max = this.frames.length;
+                let idx = Math.floor(this._index);
                 frame = this.frames[idx % max];
 
                 if(this.once && idx >= max) {
@@ -34,8 +34,8 @@
             }
 
 
-            var x = this.pos.x;
-            var y = this.pos.y;
+            let x = this.pos.x;
+            let y = this.pos.y;
 
             if(this.dir == 'vertical') {
                 y += frame * this.size.y;

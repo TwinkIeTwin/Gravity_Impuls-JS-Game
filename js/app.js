@@ -1,40 +1,6 @@
-
-//let progress = document.getElementById("loadProgress");
-let buttonStartGame = document.getElementById("buttonStartGame");
-
-resources.load([
-    'img/sprites.png',
-    'img/terrain.png',
-    'img/filterTest.png',
-    'img/treug.png',
-    'img/circle.png',
-    'img/player.png',
-    'img/border-line.png'
-]);
-
-//progress.setAttribute("value", 60);
-
-function showButtonStartGame()
-{
-    buttonStartGame.removeAttribute("hidden", true);
-    buttonStartGame.removeAttribute("disabled", true);
-    buttonStartGame.addEventListener("click", function(e){
-        
-        startGame();
-    })
-}
-
-resources.onReady(showButtonStartGame);
-// while (true){
-
-// }
-
-//resources.onReady(init);
-
-//kek();
-
 function startGame()
 {
+
 // A cross-browser requestAnimationFrame
 let requestAnimFrame = (function()
 {
@@ -52,7 +18,7 @@ let soundMainTheme = new Audio('sound/Fone.mp3');
 
 let soundTestAction = new Audio('sound/testAction.mp3')
 
-let canvas = document.createElement("canvas");
+let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
 ctx.mozImageSmoothingEnabled = false;
@@ -70,7 +36,7 @@ let clientHeight = window.innerHeight
 
 canvas.width = clientWidth;
 canvas.height = clientHeight;
-document.body.appendChild(canvas);
+//document.body.appendChild(canvas);
 
 canvas.addEventListener("mousedown", handleMouseDown);
 canvas.addEventListener("mouseup", handleMouseUp);
@@ -89,8 +55,7 @@ let vMouse = new Vec(0, 0);
 let vDirMouse = new Vec(0, 0);
 let vMouseUp = new Vec(0, 0);
 let vDirMouseUp = new Vec(0, 0);
-let vLastMouseUp = new Vec(0, 0);
-let vPlayer = new Vec(player.pos.x / clientWidth, player.pos.y / clientHeight);
+
 let vCenterScreen = new Vec(0.5, 0.5);
 let vPlayerSpeed = new Vec(0, 0);
 
@@ -106,17 +71,23 @@ let enemies = [];
 let explosions = [];
 let borders = []
 
-let lastFire = Date.now();
 let gameTime = 0;
 let isGameOver;
 let isPaused = false;
-let terrainPattern;
 
 let score = 0;
 
-let ballStartSpeed = 750;
-let enemySpeed = 500;
+let foneLineY = [];
+let foneLineX = [];
+const foneLinePeriod = 50;
 
+let menu = document.getElementById("gamePausedMenu");
+document.getElementById("resumeGame").addEventListener("click", resumeGame);
+document.getElementById("restartGame").addEventListener("click", reset);
+
+
+const ballStartSpeed = 750;
+const enemySpeed = 500;
 const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
 const speedReductionPercent = 1.025;
@@ -129,6 +100,8 @@ const scoreLabelDecreasing = 50;
 let scoreLabelSize = minScoreLabelSize;
 
 let isScoreLabelIncreasing = false;
+
+let zoomedBySpeed = 0;
 
 init();
 
@@ -246,6 +219,9 @@ function update(dt)
     camera.pos.add(vPlayerSpeed);
     player.pos.add(vPlayerSpeed);
 
+    updateFoneLines();
+    
+
     vPlayerSpeed.div(speedReductionPercent); 
 
     if (isMouseDown)
@@ -330,7 +306,6 @@ function update(dt)
 
     }
 
-
     updateEntities(dt);
 
      if(Math.random() < 1 - Math.pow(.993, gameTime)) 
@@ -355,6 +330,34 @@ function handleKeyUp(e)
     {
         isPaused ? resumeGame() : pauseGame();
     }
+}
+
+function updateFoneLines(){
+    for (let i = 0; i < foneLineX.length; i++)
+    {
+        foneLineX[i] -= vPlayerSpeed.x;
+        if (foneLineX[i] < 0){
+            foneLineX[i] = canvas.width + foneLineX[i];
+
+        }
+
+        if (foneLineX[i] > canvas.width){
+            foneLineX[i] -= canvas.width;
+        }
+    }
+
+    for (let i = 0; i < foneLineY.length; i++)
+    {
+        foneLineY[i] -= vPlayerSpeed.y;
+        if (foneLineY[i] < 0){
+            foneLineY[i] = canvas.height + foneLineY[i];
+        }
+
+        if (foneLineY[i] > canvas.height){
+            foneLineY[i] -= canvas.height;
+        }
+    }
+
 }
 
 function updateEntities(dt) 
@@ -511,6 +514,27 @@ function checkPlayerBounds()
     }
 }
 
+function drawFone()
+{
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(0,0,0,1)";
+    ctx.lineWidth = 3;
+
+    for (let i = 0; i < foneLineX.length; i++){
+        ctx.moveTo(foneLineX[i], 0);
+        ctx.lineTo(foneLineX[i], canvas.height);
+    }
+
+    for (let i = 0; i < foneLineY.length; i++)
+    {
+        ctx.moveTo(0, foneLineY[i]);
+        ctx.lineTo(canvas.width, foneLineY[i]);
+    }
+
+    ctx.stroke();
+
+}
+
 function renderSlowMoEdges()
 {
     ctx.beginPath();
@@ -553,9 +577,8 @@ function render()
     {
         renderSlowMoEdges();
     }
-    // if (slowmoCoefficient != 1){
-    //     ctx.drawImage(testFilter.src, 0, 0, canvas.width, canvas.height);
-    // }
+
+    drawFone();
 
     renderEntitiesRelativeCamera(explosions);
     renderEntitiesRelativeCamera(eatBalls);
@@ -572,22 +595,12 @@ function render()
 
     renderEntitiesRelativeCamera(borders);
 
-    // ctx.textAlign = "center";
-
-    // ctx.fillText("center", 250, 20);
-
-    // ctx.fillStyle = "#00F";
-    // ctx.strokeStyle = "#F00";
-    // ctx.font = "italic 30pt Arial";
-    // ctx.fillText("Fill text", 20, 50);
-    // ctx.font = 'bold 30px sans-serif';
-    // ctx.strokeText("Stroke text", 20, 100);
-
     ctx.font = scoreLabelSize + "% Arial";
-    ctx.strokeStyle = "red";
+    ctx.fillStyle = "red";
+
     ctx.textAlign = "center"
     ctx.lineWidth = 2;
-    ctx.strokeText(score, canvas.width / 2, 100);
+    ctx.fillText(score, canvas.width / 2, 100);
 };
 
 function renderEntities(list)
@@ -628,10 +641,12 @@ function pauseGame()
     soundMainTheme.pause();
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    menu.removeAttribute("hidden");
 }
 
 function resumeGame()
 {
+    menu.setAttribute("hidden", true);
     soundMainTheme.play();
     isPaused = false;
 }
@@ -639,7 +654,6 @@ function resumeGame()
 // Game over
 function gameOver() 
 {
-    
     new Audio('sound/dead.mp3').play();
     isGameOver = true;
     pauseGame();
@@ -649,9 +663,29 @@ function gameOver()
 function reset() 
 {
     isGameOver = false;
-    isPaused = false;
     gameTime = 0;
     score = 0;
+
+    camera.pos.set(0, 0);
+
+    player.pos = new Vec(0, 0);
+    
+    isMouseDown = false;
+    
+    vMouse = new Vec(0, 0);
+    vDirMouse = new Vec(0, 0);
+    vMouseUp = new Vec(0, 0);
+    vDirMouseUp = new Vec(0, 0);
+    
+    vCenterScreen = new Vec(0.5, 0.5);
+    vPlayerSpeed = new Vec(0, 0);
+    
+    playerAngle = 0;
+    
+    zoomRate = 0.0;
+    slowmoCoefficient = 1;
+    scoreLabelSize = minScoreLabelSize;
+    isScoreLabelIncreasing = false;
 
     enemies = [];
     eatBalls = [];
@@ -661,6 +695,18 @@ function reset()
     let startY = -1000;
     let endX = 1000;
     let endY = 1000;
+
+    foneLineX = [];
+    foneLineY = [];
+
+    for (let y = 0; y < canvas.width; y += foneLinePeriod){
+        foneLineY.push(y)
+    }
+    
+    for (let x = 0; x < canvas.width; x += foneLinePeriod){
+        foneLineX.push(x)
+    }
+
 
     // for (let borderX = startX; borderX < endX; borderX += 100)
     // {
@@ -688,5 +734,7 @@ function reset()
     }
 
     player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
+
+    resumeGame();
 };
 }
