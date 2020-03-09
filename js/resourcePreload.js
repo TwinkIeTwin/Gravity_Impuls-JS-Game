@@ -13,9 +13,13 @@ resources.load([
 function showButtonStartGame()
 {
     buttonStartGame.removeAttribute("hidden");
-    buttonStartGame.removeAttribute("disabled");
     buttonStartGame.addEventListener("click", function(e){
       //  document.location.href = "MainMenu.html";
+      
+        document.getElementById("gamePreloader").setAttribute("hidden", true)
+
+     // document.getElementById("mainMenu").removeAttribute("hidden");
+
         startGame();
     })
 }

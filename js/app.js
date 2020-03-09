@@ -1,7 +1,6 @@
 function startGame()
 {
 
-// A cross-browser requestAnimationFrame
 let requestAnimFrame = (function()
 {
     return window.requestAnimationFrame    ||
@@ -36,13 +35,20 @@ let clientHeight = window.innerHeight
 
 canvas.width = clientWidth;
 canvas.height = clientHeight;
-//document.body.appendChild(canvas);
+
+let maxVisibleWidth = canvas.width * 3;
+let maxVisibleHeight = canvas.height * 3;
+
+let visibleScreen = {
+    start : new Vec(0, 0),
+    end: new Vec(canvas.width, canvas.height),
+    height: canvas.height,
+    width: canvas.width
+}
 
 canvas.addEventListener("mousedown", handleMouseDown);
 canvas.addEventListener("mouseup", handleMouseUp);
 canvas.addEventListener("mousemove", handleMouseMoved);
-
-camera.pos.set(0, 0);
 
 let player = {
     pos: new Vec(camera.pos.x, camera.pos.y),
@@ -74,29 +80,32 @@ let borders = []
 let gameTime = 0;
 let isGameOver;
 let isPaused = false;
+let isInAchivementMenu = false;
 
 let score = 0;
 
 let foneLineY = [];
 let foneLineX = [];
-const foneLinePeriod = 50;
 
 let testZoom = 0;
 
 let menu = document.getElementById("gamePausedMenu");
 document.getElementById("resumeGame").addEventListener("click", resumeGame);
 document.getElementById("restartGame").addEventListener("click", reset);
+document.getElementById("showAchivements").addEventListener("click", showAchivements);
 
-const ballStartSpeed = 750;
-const enemySpeed = 10;
+const foneLinePeriod = 50;
+const ballStartSpeed = 1750;
+const enemySpeed = 1000;
 const zoomSpeed = 0.25;
 const deltaSlowMo = 0.05;
 const speedReductionPercent = 1.025;
 const splitOutImpulsSpeed = 20;
-const maxScoreLabelSize = 300;
-const minScoreLabelSize = 200;
-const scoreLabelIncreasing = 200;
-const scoreLabelDecreasing = 50;
+const maxScoreLabelSize = 2000;
+const minScoreLabelSize = 1000;
+const scoreLabelIncreasing = maxScoreLabelSize - minScoreLabelSize;
+const scoreLabelDecreasing = scoreLabelIncreasing / 2;
+const maxSpeedZoom = 1;
 
 let scoreLabelSize = minScoreLabelSize;
 
@@ -108,9 +117,13 @@ let currentXTranslate = 0;
 let currentYTranslate = 0;
 let currentScale = 1;
 
-let isSpeedZoomOut = false;
-
 init();
+
+function showAchivements()
+{
+    isInAchivementMenu = true;
+    document.getElementById("achivements").style.visibility="visible";
+}
 
 function handleMouseMoved(e)
 {
@@ -142,12 +155,13 @@ function handleMouseUp(e){
     vDirSpeed.multiply(splitOutImpulsSpeed);
     vPlayerSpeed.add(vDirSpeed);
 
-    eatBalls.push(new EatBall(new Vec(camera.pos.x + canvas.width / 2, camera.pos.y + canvas.height / 2), vMouseUp, ballStartSpeed));
+    eatBalls.push(new EatBall(new Vec(camera.pos.x + canvas.width / 2, camera.pos.y + canvas.height / 2), vDirMouseUp, ballStartSpeed));
 
     vLastMouseUp = vMouseUp.copy();
 }
 
-function main() {
+function main() 
+{
     let now = Date.now();
 
     // speed per second
@@ -171,13 +185,54 @@ function init() {
     main();
 }
 
-function zoomToCenter(scale){
-    currentXTranslate += -scale / 2 * canvas.width;
-    currentYTranslate += -scale / 2 * canvas.height;
-    currentScale += scale;
+function updateVisibleScreen(){
     
+    let additionalWidth = canvas.width * 2 * ( 1 - currentScale);
+    let additionalHeight = canvas.height * 2 * ( 1  - currentScale); 
+    visibleScreen.start.x = -additionalWidth / 2;
+    visibleScreen.start.y = -additionalHeight / 2;
+    visibleScreen.end.x = canvas.width + additionalWidth;
+    visibleScreen.end.y = canvas.height + additionalHeight;
+
+
+    visibleScreen.height = visibleScreen.end.y - visibleScreen.start.y;
+    visibleScreen.width = visibleScreen.end.x - visibleScreen.start.x;
+
+    if (visibleScreen.width < canvas.width){
+        visibleScreen.width = canvas.width;
+    }
+    if (visibleScreen.height < canvas.height){
+        visibleScreen.height =canvas.height;
+    }
+
+    if (visibleScreen.start.x > 0){
+        visibleScreen.start.x = 0;
+    }
+    if (visibleScreen.start.y > 0){
+        visibleScreen.start.y = 0;
+    }
+
+    // console.log("startX: "+ visibleScreen.start.x);
+    // console.log("srartY: "+ visibleScreen.start.y);
+    // console.log("endX: "+ visibleScreen.end.x);
+    // console.log("endY: "+ visibleScreen.end.y);
+    // console.log("scale: "+ currentScale);
+    // console.log("");
+}
+
+function zoomToCenter(scale){
+    let xTranslate = -scale / 2 * canvas.width;
+    let yTranslate = -scale / 2 * canvas.height;
+
+    currentXTranslate += xTranslate;
+    currentYTranslate += yTranslate;
+    currentScale += scale;
+
+    updateVisibleScreen();
+
     ctx.scale(1 + scale, 1 + scale);
-    ctx.translate(-scale / 2 * canvas.width, -scale / 2 * canvas.height);
+    
+    ctx.translate(xTranslate, yTranslate);
 };
 
 function ZoomNormalize()
@@ -187,23 +242,29 @@ function ZoomNormalize()
     currentXTranslate = 0;
     currentYTranslate = 0;
     currentScale = 1;
+
+    updateVisibleScreen();
 }
 
-function update(dt) 
-{
-
-    if (vPlayerSpeed.length() - zoomedBySpeed > 0.001 )
+function updateZoomBySpeed(dt){
+    let playerSpeedValue = vPlayerSpeed.length();
+    let zoomPerSecondSpeed = zoomSpeed * dt;
+    if (playerSpeedValue - zoomedBySpeed > 0.001 )
     {    
-        zoomedBySpeed += (vPlayerSpeed.length() - zoomedBySpeed) / 300;
-        testZoom += zoomSpeed * dt;
-        zoomToCenter(-zoomSpeed * dt);
+        zoomedBySpeed += (playerSpeedValue - zoomedBySpeed) / 300;
+
+        if (testZoom < maxSpeedZoom)
+        {
+            testZoom += zoomPerSecondSpeed;
+            zoomToCenter(-zoomPerSecondSpeed);
+        }
     }
     else
     {
         if (testZoom > 0)
         {
-            zoomToCenter(zoomSpeed * dt);
-            testZoom -= zoomSpeed * dt;
+            zoomToCenter(zoomPerSecondSpeed);
+            testZoom -= zoomPerSecondSpeed;
             zoomedBySpeed /= speedReductionPercent;
         } 
         else
@@ -217,21 +278,14 @@ function update(dt)
             testZoom = 0;
         }
     }
+}
 
-    gameTime += dt;
-
-    camera.pos.add(vPlayerSpeed);
-    player.pos.add(vPlayerSpeed);
-
-    updateFoneLines();
-
-    vPlayerSpeed.div(speedReductionPercent); 
-
+function updateSlowMo(dt){
+    let zoomPerSecondSpeed = zoomSpeed * dt
     if (isMouseDown)
     {
         if (zoomRate < 0.25)
         {
-            let zoomPerSecondSpeed = zoomSpeed * dt;
             zoomRate += zoomPerSecondSpeed;
             zoomToCenter(zoomPerSecondSpeed);
         }
@@ -251,7 +305,7 @@ function update(dt)
     {
         if (zoomRate > 0)
         {
-            let speedToBackUp = zoomSpeed * dt * 2 * slowmoCoefficient;
+            let speedToBackUp = zoomPerSecondSpeed * 2 * slowmoCoefficient;
 
             if (zoomRate < speedToBackUp)
             {
@@ -280,6 +334,21 @@ function update(dt)
             soundMainTheme.volume = 1;
         }
     }
+}
+
+function update(dt) 
+{
+    gameTime += dt;
+    camera.pos.add(vPlayerSpeed);
+    player.pos.add(vPlayerSpeed);
+
+    updateZoomBySpeed(dt);
+
+    updateFoneLines();
+
+    vPlayerSpeed.div(speedReductionPercent); 
+
+    updateSlowMo(dt);
 
     // update score size
     if (isScoreLabelIncreasing)
@@ -315,33 +384,37 @@ function update(dt)
      {
         let a = parseInt(Math.random() * 4);
         switch(a){
-            case 0:  enemies.push({
-                pos: new Vec(canvas.width + camera.pos.x,
-                        Math.random() * (canvas.height + camera.pos.y - 78)),
+            // right
+            case 0: enemies.push({
+                pos: new Vec(visibleScreen.width + camera.pos.x,
+                        Math.random() * (visibleScreen.height + camera.pos.y - 78)),
                 angle: 0,
                 sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
                                 0, [0])
             }); break;
 
+            // left
             case 1: enemies.push({
-                pos: new Vec(camera.pos.x - 86,
-                    Math.random() * (canvas.height + camera.pos.y - 78)),
+                pos: new Vec(visibleScreen.start.x + camera.pos.x - 86,
+                    Math.random() * visibleScreen.height + camera.pos.y - 78),
                 angle: 0,
                 sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
                             0, [0])
             }); break;
 
+            // down
             case 2: enemies.push({
-                pos: new Vec(Math.random() * (canvas.width + camera.pos.x - 78),
-                canvas.height + camera.pos.y),
+                pos: new Vec(Math.random() * (visibleScreen.width + camera.pos.x - 78),
+                visibleScreen.height + camera.pos.y),
                 angle: 0,
                 sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
                             0, [0])
             }); break;
 
+            // up
             case 3: enemies.push({
-                pos: new Vec(Math.random() * (canvas.width + camera.pos.x - 78),
-                camera.pos.y - 78),
+                pos: new Vec(Math.random() * visibleScreen.width + camera.pos.x - 78,
+                visibleScreen.start.y + camera.pos.y - 78),
                 angle: 0,
                 sprite: new Sprite('img/treug.png', new Vec(0, 0), new Vec(86, 78),
                             0, [0])
@@ -366,25 +439,24 @@ function updateFoneLines(){
     for (let i = 0; i < foneLineX.length; i++)
     {
         foneLineX[i] -= vPlayerSpeed.x;
-        if (foneLineX[i] < 0){
-            foneLineX[i] = canvas.width + foneLineX[i];
-
+        if (foneLineX[i] < -maxVisibleWidth / 3){
+            foneLineX[i] = maxVisibleWidth + foneLineX[i];
         }
 
-        if (foneLineX[i] > canvas.width){
-            foneLineX[i] -= canvas.width;
+        if (foneLineX[i] > maxVisibleWidth){
+            foneLineX[i] -= maxVisibleWidth * 4 / 3;
         }
     }
 
     for (let i = 0; i < foneLineY.length; i++)
     {
         foneLineY[i] -= vPlayerSpeed.y;
-        if (foneLineY[i] < 0){
-            foneLineY[i] = canvas.height + foneLineY[i];
+        if (foneLineY[i] < -maxVisibleHeight / 3){
+            foneLineY[i] = maxVisibleHeight + foneLineY[i];
         }
 
-        if (foneLineY[i] > canvas.height){
-            foneLineY[i] -= canvas.height;
+        if (foneLineY[i] > maxVisibleHeight){
+            foneLineY[i] -= maxVisibleHeight * 4 / 3;
         }
     }
 
@@ -404,17 +476,6 @@ function updateEntities(dt)
         ballSpeed.multiply(ball.speed * dt);
         ball.pos.add(ballSpeed);
         ball.speed /= speedReductionPercent;
-    
-        // Remove the bullet if it goes offscreen
-        // if(bullet.pos[1] < camera.pos.y - canvas.height / 2 ||
-        //     bullet.pos[1] > camera.pos.y + canvas.height / 2 ||
-        //     bullet.pos[0] < camera.pos.x - canvas.width / 2 ||
-        //     bullet.pos[0] > camera.pos.x + canvas.width / 2)
-        // {
-        //     // eatBalls.splice(i, 1);
-        //     i--;
-   
-        // }
     }
 
     // Update all the enemies
@@ -425,15 +486,9 @@ function updateEntities(dt)
         vEnemyDir.normalize();
         enemies[i].angle = vEnemyDir.angle();
         enemies[i].pos.add(vEnemyDir.multiply(enemySpeed * dt));
-        
-        //enemies[i].pos.x -= enemySpeed * dt;
+
         enemies[i].sprite.update(dt);
 
-        // Remove if offscreen
-        // if(enemies[i].pos.x + enemies[i].sprite.size.x + camera.pos.x < 0) {
-        //     enemies.splice(i, 1);
-        //     i--;
-        // }
     }
 
     for(let i = 0; i<explosions.length; i++) {
@@ -546,19 +601,20 @@ function checkPlayerBounds()
 
 function drawFone()
 {
+    ctx.shadowColor = "black";
     ctx.beginPath();
     ctx.strokeStyle = "rgba(0,0,0,1)";
     ctx.lineWidth = 3;
 
     for (let i = 0; i < foneLineX.length; i++){
-        ctx.moveTo(foneLineX[i], 0);
-        ctx.lineTo(foneLineX[i], canvas.height);
+        ctx.moveTo(foneLineX[i], visibleScreen.start.y);
+        ctx.lineTo(foneLineX[i], visibleScreen.height);
     }
 
     for (let i = 0; i < foneLineY.length; i++)
     {
-        ctx.moveTo(0, foneLineY[i]);
-        ctx.lineTo(canvas.width, foneLineY[i]);
+        ctx.moveTo(visibleScreen.start.x, foneLineY[i]);
+        ctx.lineTo(visibleScreen.width, foneLineY[i]);
     }
 
     ctx.stroke();
@@ -570,7 +626,6 @@ function renderSlowMoEdges()
     ctx.beginPath();
     ctx.arc(canvas.width / 2, canvas.height / 2, canvas.height / 2, 0, 2 * Math.PI, false);
     
-    ctx.fillStyle = "rgba(0,0,0,0)";
     ctx.lineWidth = 200;
     ctx.strokeStyle = "rgba(0,0,0," + (slowmoCoefficient - 1) / 6 + ")";
 
@@ -579,7 +634,6 @@ function renderSlowMoEdges()
     ctx.beginPath();
     ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, 2 * Math.PI, false);
     
-    ctx.fillStyle = "rgba(0,0,0,0)";
     ctx.lineWidth = 200;
     ctx.strokeStyle = "rgba(0,0,0," + (slowmoCoefficient - 1) / 3 + ")";
 
@@ -588,19 +642,37 @@ function renderSlowMoEdges()
 
 function render() 
 {
-    ctx.fillStyle = '#a0a0a0';
-    ctx.fillRect(-1000, -1000, canvas.width + 2000, canvas.height +2000);
+    // ctx.fillStyle = '#a0a0a0';
+    // ctx.fillRect(-1000, -1000, canvas.width + 2000, canvas.height +2000);
+
+    ctx.fillStyle = "#a0a0a0";
+    ctx.fillRect(visibleScreen.start.x , visibleScreen.start.y , visibleScreen.width, visibleScreen.height);
+  
+    // ctx.beginPath();
+    // ctx.arc(visibleScreen.start.x, visibleScreen.start.y, 500, 0, 2 * Math.PI, false);
+    
+    // ctx.lineWidth = 200;
+    // ctx.strokeStyle = "yellow";
+
+    // ctx.stroke();
+
+
+    // ctx.fillStyle = "green";
+    // ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // ctx.fillStyle = "black";
+    // ctx.fillRect(-maxVisibleWidth / 3, -maxVisibleHeight / 3, maxVisibleWidth, maxVisibleHeight);
 
     if (isPaused)
     {
         ctx.fillStyle = 'rgba(0,0,0,0.25)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(visibleScreen.start.x , visibleScreen.start.y , visibleScreen.width, visibleScreen.height);
     }
 
     if (isGameOver)
     {
         ctx.fillStyle = 'rgba(255,0,0,0.25)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(visibleScreen.start.x , visibleScreen.start.y , visibleScreen.width, visibleScreen.height);
     }
 
     if (slowmoCoefficient != 1)
@@ -612,6 +684,7 @@ function render()
 
     renderEntitiesRelativeCamera(explosions);
     renderEntitiesRelativeCamera(eatBalls);
+    ctx.shadowColor = "red";
     renderEntitiesRelativeCamera(enemies);
     
 
@@ -619,18 +692,36 @@ function render()
     {
         let playerPos =  new Vec(player.pos.x, player.pos.y);
         player.pos = new Vec(canvas.width / 2 - player.sprite.size.x / 2, canvas.height / 2 - player.sprite.size.y / 2);
+      
+
+        // ctx.beginPath();
+        // ctx.arc(canvas.width / 2 + player.sprite.size.x / 6, canvas.height / 2 + player.sprite.size.y / 6, player.sprite.size.x / 2, playerAngle - 1, playerAngle + Math.PI * 2 - 1 - 1, false);
+        
+        // ctx.fillStyle = "rgba(0,0,0,0.5)";
+    
+        ctx.shadowColor = "#2AA2DD";
+        ctx.fill();
         renderEntity(player, playerAngle);
         player.pos = playerPos;
     }
 
     renderEntitiesRelativeCamera(borders);
 
-    ctx.font = scoreLabelSize + "% Arial";
-    ctx.fillStyle = "red";
+    ctx.beginPath();
+    ctx.font = scoreLabelSize / (1 + currentScale) + "% Arial";
+
+    ctx.strokeStyle = "white";
+
+    ctx.shadowColor = "#2AA2DD";
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 5;
 
     ctx.textAlign = "center"
-    ctx.lineWidth = 2;
-    ctx.fillText(score, canvas.width / 2, 100);
+    ctx.textBaseline = "middle"
+
+    ctx.strokeText(score, canvas.width / 2, visibleScreen.start.y / 2 + maxScoreLabelSize / 20);
 };
 
 function renderEntities(list)
@@ -676,22 +767,31 @@ function pauseGame()
 
 function resumeGame()
 {
-    menu.setAttribute("hidden", true);
-    soundMainTheme.play();
-    isPaused = false;
+    if (!isInAchivementMenu)
+    {
+        menu.setAttribute("hidden", true);
+        soundMainTheme.play();
+        isPaused = false;
+    } 
+    else
+    {
+        isInAchivementMenu = false;
+        document.getElementById("achivements").style.visibility="hidden";
+    }
 }
 
-// Game over
 function gameOver() 
 {
     new Audio('sound/dead.mp3').play();
     isGameOver = true;
+    document.getElementById("resumeGame").setAttribute("hidden", true);
     pauseGame();
 }
 
 // Reset game to original state
 function reset() 
 {
+    document.getElementById("resumeGame").removeAttribute("hidden");
     isGameOver = false;
     gameTime = 0;
     score = 0;
@@ -729,11 +829,11 @@ function reset()
     foneLineX = [];
     foneLineY = [];
 
-    for (let y = 0; y < canvas.width; y += foneLinePeriod){
+    for (let y = -maxVisibleHeight / 3; y < maxVisibleHeight; y += foneLinePeriod){
         foneLineY.push(y)
     }
-    
-    for (let x = 0; x < canvas.width; x += foneLinePeriod){
+    // ctx.fillRect(-maxVisibleWidth / 3, -maxVisibleHeight / 3, maxVisibleWidth, maxVisibleHeight);
+    for (let x = -maxVisibleWidth / 3; x < maxVisibleWidth; x += foneLinePeriod){
         foneLineX.push(x)
     }
 
