@@ -1,19 +1,38 @@
 body 
 {
     background-color: #151515;
-    /* height: 98%;
-    width: 98%;  
-    display: flex; */
+    overflow: hidden;
 }
 
 canvas 
 {
     z-index: 0;
-    display: block;
     margin: auto;
     position: absolute;
     top: 0;
     left: 0;
+    cursor: none;
+}
+
+.notification 
+{
+    border-radius: 50%;
+    position: fixed;
+    z-index: 1000;
+    padding: 5px;
+    border: 2px solid #BBB; 
+    font-size: 20px;
+    background: white;
+    text-align: center;
+}
+
+.notification img
+{
+    border-radius: 50%;
+}
+  
+.achivementUnlocked {
+    background: white;
 }
 
 .FullFlexedClearFone
@@ -41,9 +60,9 @@ button
     background-color: #323233;
     border-color: #1E1E1E;
     color: white;
-    font-size: 3vh;
+    font-size: 1em;
     margin-top: 10px;
-    height: 7.5vh;
+    height: 3em;
     width: 100%;
 }
 
@@ -63,39 +82,28 @@ progress::-webkit-progress-value
 
 #achivements
 {
-    /* display: flex;
-    flex-wrap: wrap; */
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     grid-auto-rows: minmax(auto, 1em);
     grid-gap: 1em;
     visibility: hidden;
 }
 
-.module {
+.module 
+{
     z-index: 2;
-
     background: #eaeaea;
-    display: flex;
+
     align-items: center;
     justify-content: center;
     height: 200px;
-
-    margin-left: 5px;
-    margin-right: 5px;
-    flex: 1 1 200px;
+    
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
 
 .module img
 {
-    width: 100%;
-    height: 100%;
+    width: 125px;
+    height: 125px;
 }
-
-  /* If Grid is supported, remove the margin we set for the fallback */
-  @supports (display: grid) {
-    .module {
-      margin: 0;
-    }
-  }
-

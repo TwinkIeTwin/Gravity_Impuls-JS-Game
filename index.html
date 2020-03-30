@@ -3,106 +3,39 @@
   <head>
     <meta charset="utf-8">
     <title>Gravity impulse.</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width">
-
     <link rel="stylesheet" href="css/app.css">
   </head>
   <body>
+    <canvas id = "canvas"></canvas>
 
     <!-- progress of game loading -->
     <div id = "gamePreloader" class="wrapper">
       <div>
         <button id="buttonStartGame" hidden>Play</button>
       </div>
-      <progress max="1" value="0" id="loadProgress">
-      </progress>
+      <progress max="1" value="0" id="loadProgress"></progress>
     </div>
-    <canvas id = "canvas"></canvas>
 
-    <!-- pause menu -->
+  <!-- pause menu -->
   <div id = "gamePausedMenu" class="FullFlexedClearFone" hidden>
     <div class="wrapper">
-    <button id = "resumeGame">Resume</button>
-    <button id = "restartGame">Restart</button>
-    <button id="showAchivements">Achivements</button>
+      <button id = "resumeGame">Resume</button>
+      <button id = "restartGame">Restart</button>
+      <button id="showAchivements">Achivements</button>
     </div>
   </div>
 
-  <!-- main menu -->
-  <!-- <nav id = "mainMenu" class="wrapper" hidden>
-    <button id = "startGame">Start game</button>
-    <form action="Achivements.html">
-        <button type="submit">Achivements</button>
-    </form>
-  </nav> -->
-
-
-
-<!-- Achivements -->
+  <!-- Achivements -->
   <div id = "achivements" class = "FullFlexedClearFone" style="background-color: gray;">
-    
-    <div class="module" >
-    <figure>
-      <img src="img/achivement.png" alt="achivement"> </img>
-      <figcaption>Text</figcaption>
-    </figure>
-    </div>
-
-    <div class="module" >
-      <figure>
-        <img src="img/achivement.png" alt="achivement"> </img>
-        <figcaption>Text</figcaption>
-      </figure>
-      </div>
-          
-    <div class="module" >
-      <figure>
-        <img src="img/achivement.png" alt="achivement"> </img>
-        <figcaption>Text</figcaption>
-      </figure>
-      </div>
-
-    <div class="module" >
-      <figure>
-        <img src="img/achivement.png" alt="achivement"> </img>
-        <figcaption>Text</figcaption>
-      </figure>
-      </div>
-    
-    <div class="module" >
-      <figure>
-        <img src="img/achivement.png" alt="achivement"> </img>
-        <figcaption>Text</figcaption>
-      </figure>
-      </div>
-
-      <div class="module" >
-        <figure>
-          <img src="img/achivement.png" alt="achivement"> </img>
-          <figcaption>Text</figcaption>
-        </figure>
-        </div>
-
-        <div class="module" >
-          <figure>
-            <img src="img/achivement.png" alt="achivement"> </img>
-            <figcaption>Text</figcaption>
-          </figure>
-          </div>
   </div>
-</div>
-
-
-  
 
     <script type="text/javascript" src="js/resources.js"></script>
-    <script type="text/javascript" src="js/input.js"></script>
+    <script type="text/javascript" src="js/resourcePreload.js"></script>
     <script type="text/javascript" src="js/vector.js"></script>
     <script type="text/javascript" src="js/eatBall.js"></script>
-    <script type="text/javascript" src="js/camera.js"></script>
     <script type="text/javascript" src="js/sprite.js"></script>
+    <script type="text/javascript" src="js/achivement.js"></script>
+    <script type="text/javascript" src="js/enemy.js"></script>
     <script type="text/javascript" src="js/app.js"></script>
-    <script type="text/javascript" src="js/resourcePreload.js"></script>
   </body>
 </html>
