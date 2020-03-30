@@ -272,7 +272,11 @@ function startGame()
         currentYTranslate += yTranslate;
         currentScale += scale;
 
-        updateVisibleScreen();
+        if (currentScale < 1)
+        {
+            updateVisibleScreen();
+        }
+        
 
         ctx.scale(1 + scale, 1 + scale);
         
