@@ -13,7 +13,7 @@ function startGame()
     canvas.width = clientWidth;
     canvas.height = clientHeight;
 
-    const foneLinePeriod = 50;
+    const foneLinePeriod = 150;
     const ballStartSpeed = 1750;
 
     const zoomSpeed = 0.25;
@@ -51,6 +51,7 @@ function startGame()
     const minBallSpeed = 10;
     const notificationDuration = 3000;
     const playerAngleOffset = -0.275;
+    const maxEnemiesCount = 150;
 
     const achivementSoundPath = "sound/achivement.mp3";
     const enemyDeadSoundPath = 'sound/triangle-dead.mp3';
@@ -119,6 +120,7 @@ function startGame()
     let score = 0;
     let enemySpeed = 0;
     let centerOfCanvas = new Vec(canvas.width / 2, canvas.height / 2);
+    let aliveEnemiesCount = 0;
 
     let zoomedBySpeed = 0;
 
@@ -139,7 +141,7 @@ function startGame()
     ctx.shadowBlur = startShadowBlur;
     ctx.lineWidth = 5;
 
-    createAchivements();
+    
     init();
 
     function handleMouseMoved(e)
@@ -235,6 +237,8 @@ function startGame()
 
     function init() 
     {
+        createAchivements();
+        generateEntities();
         soundMainTheme.play();
         resetGameState();
         lastTime = Date.now();
@@ -500,10 +504,10 @@ function startGame()
 
     function updateEnemySpawn()
     {
-        if(Math.random() < 1 - Math.pow(enemiesSpawnCoefficient, gameTime)) 
+        if(aliveEnemiesCount < maxEnemiesCount && Math.random() < 1 - Math.pow(enemiesSpawnCoefficient, gameTime)) 
         {
-            let a = parseInt(Math.random() * 4);
-            switch(a)
+            let spawnDirection = parseInt(Math.random() * 4);
+            switch(spawnDirection)
             {
                 // right
                 case 0: enemies.push( new Enemy(
@@ -536,7 +540,7 @@ function startGame()
 
             if (foneLineX[i] < -minStartX)
             {
-                foneLineX[i] = maxVisibleWidth + foneLineX[i];
+                foneLineX[i] = maxVisibleWidth * 4 / 3 + foneLineX[i];
             }
 
             if (foneLineX[i] > maxVisibleWidth)
@@ -551,7 +555,7 @@ function startGame()
 
             if (foneLineY[i] < -minStartY)
             {
-                foneLineY[i] = maxVisibleHeight + foneLineY[i];
+                foneLineY[i] = maxVisibleHeight * 4 / 3 + foneLineY[i];
             }
 
             if (foneLineY[i] > maxVisibleHeight)
@@ -671,12 +675,15 @@ function startGame()
     function renderFone()
     {
         ctx.beginPath();
+ 
+        
         ctx.shadowColor = "darkblue";
         ctx.strokeStyle = "lightblue";
         
         ctx.lineWidth = 3;
 
-        for (let i = 0; i < foneLineX.length; i++){
+        for (let i = 0; i < foneLineX.length; i++)
+        {
             ctx.moveTo(foneLineX[i], visibleScreen.start.y);
             ctx.lineTo(foneLineX[i], visibleScreen.height);
         }
@@ -886,13 +893,28 @@ function startGame()
           });
       }
 
+    function generateEntities()
+    {
+        for (let y = -minStartY; y < maxVisibleHeight; y += foneLinePeriod)
+        {
+            foneLineY.push(y)
+        }
+
+        for (let x = -minStartX; x < maxVisibleWidth; x += foneLinePeriod){
+            foneLineX.push(x)
+        }
+    }
+
     function resetGameState() 
     {
         document.getElementById("resumeGame").removeAttribute("hidden");
 
+        aliveEnemiesCount = 0;
+
+        enemies = [];
+
         canvas.width = clientWidth;
         canvas.height = clientHeight;
-    
     
         maxScoreLabelSize = (clientWidth + clientHeight) / 2;
         minScoreLabelSize = maxScoreLabelSize / 2;
@@ -937,11 +959,9 @@ function startGame()
         slowmoCoefficient = 1;
         lastTime;
         eatBalls = [];
-        enemies = [];
+
         explosions = [];
-        foneLineY = [];
-        foneLineX = [];
-        achivements = [];
+
         gameTime = 0;
         isGameOver = false;
         score = 0;
@@ -956,15 +976,6 @@ function startGame()
         currentXTranslate = 0;
         currentYTranslate = 0;
         currentScale = 1;
-
-        for (let y = -minStartY; y < maxVisibleHeight; y += foneLinePeriod)
-        {
-            foneLineY.push(y)
-        }
-
-        for (let x = -minStartX; x < maxVisibleWidth; x += foneLinePeriod){
-            foneLineX.push(x)
-        }
 
         player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
 
