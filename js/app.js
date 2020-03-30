@@ -181,7 +181,7 @@ function startGame()
     {
         if (e.keyCode == 27)
         {
-            if (isPaused)
+            if (isPaused )
             { 
                 resumeGame();
             } 
@@ -836,9 +836,12 @@ function startGame()
     {
         if (!isInAchivementMenu)
         {
-            menu.setAttribute("hidden", true);
-            soundMainTheme.play();
-            isPaused = false;
+            if (!isGameOver)
+            {
+                menu.setAttribute("hidden", true);
+                soundMainTheme.play();
+                isPaused = false;
+            }
         } 
         else
         {
@@ -885,9 +888,68 @@ function startGame()
 
     function resetGameState() 
     {
-
         document.getElementById("resumeGame").removeAttribute("hidden");
 
+        canvas.width = clientWidth;
+        canvas.height = clientHeight;
+    
+    
+        maxScoreLabelSize = (clientWidth + clientHeight) / 2;
+        minScoreLabelSize = maxScoreLabelSize / 2;
+        scoreLabelIncreasing = maxScoreLabelSize - minScoreLabelSize;
+        scoreLabelDecreasing = scoreLabelIncreasing / 2;
+    
+        maxVisibleWidth = canvas.width * maxUnzoomedRate;
+        maxVisibleHeight = canvas.height * maxUnzoomedRate;
+        minStartX = maxVisibleWidth / maxUnzoomedRate;
+        minStartY = maxVisibleHeight / maxUnzoomedRate; 
+    
+        visibleScreen = {
+            start : new Vec(0, 0),
+            end: new Vec(canvas.width, canvas.height),
+            height: canvas.height,
+            width: canvas.width
+        }
+
+        camera = 
+        {
+            pos: new Vec(0, 0),
+        };
+    
+        player = 
+        {
+            pos: new Vec(camera.pos.x, camera.pos.y),
+            sprite: new Sprite('img/player.png', new Vec(0, 0), new Vec(86, 86), 0, [0])
+        };
+    
+        soundMainTheme = new Audio(foneSoundPath);
+        isMouseDown = false;
+        isPaused = false;
+        isInAchivementMenu = false;
+        vMouse = new Vec(0, 0);
+        vDirMouse = new Vec(0, 0);
+        vMouseUp = new Vec(0, 0);
+        vDirMouseUp = new Vec(0, 0);
+        vCenterScreen = new Vec(0.5, 0.5);
+        vPlayerSpeed = new Vec(0, 0);
+        playerAngle = 0;
+        zoomRate = 0.0;
+        slowmoCoefficient = 1;
+        lastTime;
+        eatBalls = [];
+        enemies = [];
+        explosions = [];
+        foneLineY = [];
+        foneLineX = [];
+        achivements = [];
+        gameTime = 0;
+        isGameOver = false;
+        score = 0;
+        enemySpeed = 0;
+        centerOfCanvas = new Vec(canvas.width / 2, canvas.height / 2);
+    
+        zoomedBySpeed = 0;
+    
         scoreLabelSize = minScoreLabelSize;
         isScoreLabelIncreasing = false;
         speedReachingZoom = 0;
@@ -895,31 +957,8 @@ function startGame()
         currentYTranslate = 0;
         currentScale = 1;
 
-        isGameOver = false;
-        player.pos = new Vec(0, 0);
-        vMouse = new Vec(0, 0);
-        vDirMouse = new Vec(0, 0);
-        vMouseUp = new Vec(0, 0);
-        vDirMouseUp = new Vec(0, 0);
-        vCenterScreen = new Vec(0.5, 0.5);
-        vPlayerSpeed = new Vec(0, 0);
-        camera.pos.set(0, 0);
-        gameTime = 0;
-        score = 0;
-        playerAngle = 0;
-        zoomRate = 0.0;
-        slowmoCoefficient = 1;
-        scoreLabelSize = minScoreLabelSize;
-        isScoreLabelIncreasing = false;
-        isMouseDown = false;
-        isInAchivementMenu = false;
-        enemies = [];
-        eatBalls = [];
-        explosions = [];
-        foneLineX = [];
-        foneLineY = [];
-
-        for (let y = -minStartY; y < maxVisibleHeight; y += foneLinePeriod){
+        for (let y = -minStartY; y < maxVisibleHeight; y += foneLinePeriod)
+        {
             foneLineY.push(y)
         }
 
@@ -929,10 +968,10 @@ function startGame()
 
         player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
 
-        enemySpeed = 0;
-        centerOfCanvas = new Vec(canvas.width / 2, canvas.height / 2);
-    
-        zoomedBySpeed = 0;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        ctx.shadowBlur = startShadowBlur;
+        ctx.lineWidth = 5;
 
         resumeGame();
     };
