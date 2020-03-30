@@ -2,9 +2,11 @@ function startGame()
 {
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
+
     let clientWidth = window.innerWidth
     || document.documentElement.clientWidth
     || document.body.clientWidth;
+
     let clientHeight = window.innerHeight
     || document.documentElement.clientHeight
     || document.body.clientHeight;
@@ -110,7 +112,6 @@ function startGame()
     let eatBalls = [];
     let enemies = [];
     let explosions = [];
-    let borders = []
     let foneLineY = [];
     let foneLineX = [];
     let achivements = [];
@@ -277,7 +278,6 @@ function startGame()
             updateVisibleScreen();
         }
         
-
         ctx.scale(1 + scale, 1 + scale);
         
         ctx.translate(xTranslate, yTranslate);
@@ -655,15 +655,6 @@ function startGame()
             }
         }
 
-        // border collision 
-        for (let i = 0; i < borders.length; i++)
-        {
-            if (boxCollides(borders[i].pos, borders[i].sprite.size, player.pos, player.sprite.size))
-            {
-                vPlayerSpeed = vPlayerSpeed.negative();
-                playSound(smashSoundPath);    
-            }
-        }
     }
 
     function addExposionAt(position)
@@ -756,8 +747,6 @@ function startGame()
         {
             renderPlayer();
         }
-
-        renderEntitiesRelativeCamera(borders);
 
         renderScores();
     };
@@ -899,6 +888,12 @@ function startGame()
 
     function resetGameState() 
     {
+        visibleScreen = {
+            start : new Vec(0, 0),
+            end: new Vec(canvas.width, canvas.height),
+            height: canvas.height,
+            width: canvas.width
+        }
         document.getElementById("resumeGame").removeAttribute("hidden");
        
         isGameOver = false;
@@ -922,7 +917,6 @@ function startGame()
         enemies = [];
         eatBalls = [];
         explosions = [];
-        borders = []
         foneLineX = [];
         foneLineY = [];
 
@@ -934,22 +928,7 @@ function startGame()
             foneLineX.push(x)
         }
 
-        const startX = -1000;
-        const startY = -1000;
-        const endX = 1000;
-        const endY = 1000;
 
-        for (let borderY = startY; borderY < endY; borderY += 150)
-        {
-            borders.push({pos: new Vec(startX, borderY),
-            angle : 0,
-                sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
-        
-            borders.push({pos: new Vec(endX, borderY),
-            angle: 0, 
-            
-            sprite: new Sprite('img/border-line.png', new Vec(0, 0), new Vec(100, 10), 0, [0])});
-        }
 
         player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
 
