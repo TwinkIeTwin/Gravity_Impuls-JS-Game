@@ -57,7 +57,6 @@ function startGame()
     const foneSoundPath = 'sound/Fone.mp3';
     const splitOutSoundPath = 'sound/testAction.mp3';
     const playerDeadSoundPath = 'sound/dead.mp3';
-    const smashSoundPath = 'sound/smash.mp3';
 
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mouseup", handleMouseUp);
@@ -115,7 +114,6 @@ function startGame()
     let foneLineY = [];
     let foneLineX = [];
     let achivements = [];
-    let achivementsToShow = [];
     let gameTime = 0;
     let isGameOver = false;
     let score = 0;
@@ -388,7 +386,6 @@ function startGame()
             if (achivements[i].isAchived())
             {
                 showAchivementNotivication(achivements[i].imgPath);
-                achivementsToShow.push(achivements[i]);
                 playSound(achivementSoundPath)
                 unlockAchivement(achivements[i]);
             }
@@ -888,14 +885,16 @@ function startGame()
 
     function resetGameState() 
     {
-        visibleScreen = {
-            start : new Vec(0, 0),
-            end: new Vec(canvas.width, canvas.height),
-            height: canvas.height,
-            width: canvas.width
-        }
+
         document.getElementById("resumeGame").removeAttribute("hidden");
-       
+
+        scoreLabelSize = minScoreLabelSize;
+        isScoreLabelIncreasing = false;
+        speedReachingZoom = 0;
+        currentXTranslate = 0;
+        currentYTranslate = 0;
+        currentScale = 1;
+
         isGameOver = false;
         player.pos = new Vec(0, 0);
         vMouse = new Vec(0, 0);
@@ -928,9 +927,12 @@ function startGame()
             foneLineX.push(x)
         }
 
-
-
         player.pos = new Vec(clientWidth / 2 - player.sprite.size.x / 2, clientHeight / 2 - player.sprite.size.y / 2);
+
+        enemySpeed = 0;
+        centerOfCanvas = new Vec(canvas.width / 2, canvas.height / 2);
+    
+        zoomedBySpeed = 0;
 
         resumeGame();
     };
