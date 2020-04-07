@@ -36,9 +36,9 @@
             img.onload = function() 
             {
                 countOfLoaded++;
-                sleep(100);
+
                 progressBar.setAttribute("value", countOfLoaded / countToLoad);
-                sleep(100);
+
                 resourceCache[url] = img;
                 
                 if(isReady()) 
@@ -72,12 +72,6 @@
     function onReady(func) 
     {
         readyCallbacks.push(func);
-    }
-
-    function sleep(ms) 
-    {
-        ms += new Date().getTime();
-        while (new Date() < ms){}
     }
 
     window.resources = { 

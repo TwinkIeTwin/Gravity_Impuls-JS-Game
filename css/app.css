@@ -31,7 +31,8 @@ canvas
     border-radius: 50%;
 }
   
-.achivementUnlocked {
+.achivementUnlockedNotify 
+{
     background: white;
 }
 
@@ -82,10 +83,15 @@ progress::-webkit-progress-value
 
 #achivements
 {
+    background-color: #888888;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     grid-auto-rows: minmax(auto, 1em);
-    grid-gap: 1em;
+    grid-gap: 1em;    
+}
+
+#achivementsMenu
+{
     visibility: hidden;
 }
 
@@ -99,6 +105,12 @@ progress::-webkit-progress-value
     height: 200px;
     
     overflow-x: hidden;
+    
+    overflow-y: hidden;
+}
+.module:hover
+{
+    background: #ffffff;
     overflow-y: scroll;
 }
 

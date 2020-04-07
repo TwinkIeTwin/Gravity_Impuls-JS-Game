@@ -155,10 +155,6 @@ function startGame()
     function handleMouseDown(e)
     {
         isMouseDown = true;
-        if (!isPaused && !isGameOver)
-        {
-            soundMainTheme.play();
-        }
     }
 
     function handleMouseUp(e)
@@ -263,7 +259,7 @@ function startGame()
     function showAchivements()
     {
         isInAchivementMenu = true;
-        document.getElementById("achivements").style.visibility="visible";
+        document.getElementById("achivementsMenu").style.visibility="visible";
     }
 
     function zoomToCenter(scale)
@@ -304,23 +300,34 @@ function startGame()
         achivements.push( new Achivement("butcher", "You killed more than 100 enemies.", function(){return score > 100}, "img/achivements/kill100.png"));
         achivements.push( new Achivement("pioneer", "You survived more than 30 sec.", function(){return gameTime > 30}, "img/achivements/suvive30sec.png"));
         achivements.push( new Achivement("Bear grills", "You survived more than minute.", function(){return score > 60}, "img/achivements/survive60sec.png"));
+        generateAchivementsMenu();
     }
 
-    function unlockAchivement(achivement)
+    function generateAchivementsMenu()
     {
         let achivementMenu = document.getElementById("achivements");
-        let achiveModule = document.createElement('div');
-        achiveModule.className = "module";
-        achiveModule.innerHTML = 
-        '<figure>' +
-            '<img src="'+ achivement.imgPath + '" alt="achivement"> </img>' + 
-            '<figcaption>'+
-                '<details>'+
-                '<summary>'+ achivement.shortName + '</summary>'+
-                achivement.fullName + '</details>' +
-            '</figcaption>'+
-        '</figure>';
-        achivementMenu.append(achiveModule);
+        for (let i = 0; i < achivements.length; i++)
+        {
+            let achiveModule = document.createElement('div');
+            achiveModule.className = "module";
+            achiveModule.innerHTML = 
+            '<figure>' +
+                '<img src="'+ achivements[i].imgPath + '" alt="achivement"> </img>' + 
+                '<figcaption>'+
+                    '<details>'+
+                    '<summary>'+ achivements[i].shortName + '</summary>'+
+                    achivements[i].fullName + '</details>' +
+                '</figcaption>'+
+            '</figure>';
+            achiveModule.style.opacity = 0.5;
+            achivementMenu.append(achiveModule);
+            achivements[i].html = achiveModule;
+        }
+    }
+
+    function unlockAchivementInMenu(achivement)
+    {
+        achivement.html.style.opacity = 1.0;
     }
 
     function update(dt) 
@@ -391,7 +398,7 @@ function startGame()
             {
                 showAchivementNotivication(achivements[i].imgPath);
                 playSound(achivementSoundPath)
-                unlockAchivement(achivements[i]);
+                unlockAchivementInMenu(achivements[i]);
             }
         }
     }
@@ -747,10 +754,7 @@ function startGame()
         ctx.shadowColor = "red";
         renderEntitiesRelativeCamera(enemies);
         
-        if(!isGameOver) 
-        {
-            renderPlayer();
-        }
+        renderPlayer();
 
         renderScores();
     };
@@ -853,7 +857,7 @@ function startGame()
         else
         {
             isInAchivementMenu = false;
-            document.getElementById("achivements").style.visibility="hidden";
+            document.getElementById("achivementsMenu").style.visibility="hidden";
         }
     }
 
@@ -889,7 +893,7 @@ function startGame()
             top: 10,
             right: 10,
             html: '<img src = "' + imgPath + '" width = 50px height = 50px alt="achivement" />',
-            className: "achivementUnlocked"
+            className: "achivementUnlockedNotify"
           });
       }
 
@@ -944,7 +948,6 @@ function startGame()
             sprite: new Sprite('img/player.png', new Vec(0, 0), new Vec(86, 86), 0, [0])
         };
     
-        soundMainTheme = new Audio(foneSoundPath);
         isMouseDown = false;
         isPaused = false;
         isInAchivementMenu = false;

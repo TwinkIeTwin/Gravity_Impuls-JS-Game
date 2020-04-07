@@ -1,12 +1,13 @@
 class Achivement 
 {
-    constructor(shortName, fullName, condition, imgPath) 
+    constructor(shortName, fullName, condition, imgPath, html) 
     {
         this.isComplete = false;
         this.shortName = shortName;
         this.fullName = fullName;
         this.condition = condition;
         this.imgPath = imgPath;
+        this.html = html;
     }
 
     isAchived()
