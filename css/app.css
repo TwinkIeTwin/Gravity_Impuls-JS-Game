@@ -99,7 +99,7 @@ progress::-webkit-progress-value
 {
     z-index: 2;
     background: #eaeaea;
-
+ 
     align-items: center;
     justify-content: center;
     height: 200px;
@@ -110,6 +110,7 @@ progress::-webkit-progress-value
 }
 .module:hover
 {
+    -webkit-filter: saturate(300%);
     background: #ffffff;
     overflow-y: scroll;
 }
