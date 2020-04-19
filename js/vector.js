@@ -1,5 +1,5 @@
-// инициализация
-class Vec {
+class Vec 
+{
     constructor(x, y) {
         if (typeof x == 'object') 
         {

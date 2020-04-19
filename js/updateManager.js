@@ -1,352 +1,362 @@
-
-
-function updateVisibleScreen()
+class UpdateManager
 {
-    let additionalScale = 2 - 2 * currentScale;
-    let additionalWidth = canvas.width * additionalScale;
-    let additionalHeight = canvas.height * additionalScale; 
-    visibleScreen.start.x = -additionalWidth / 2 ;
-    visibleScreen.start.y = -additionalHeight / 2 ;
-
-    visibleScreen.end.x = canvas.width + additionalWidth;
-    visibleScreen.end.y = canvas.height + additionalHeight;
-
-    visibleScreen.height = visibleScreen.end.y - visibleScreen.start.y;
-    visibleScreen.width = visibleScreen.end.x - visibleScreen.start.x;
-}
-
-function updateZoomBySpeed(dt)
-{
-    let playerSpeedValue = vPlayerSpeed.length();
-    let zoomPerSecondSpeed = zoomSpeed * dt;
-    if (playerSpeedValue > speedReachingZoom )
-    {    
-        speedReachingZoom += (playerSpeedValue - speedReachingZoom) / durationOfZoomBySpeedIncreasing;
-
-        if (zoomedBySpeed < maxSpeedZoom)
-        {
-            zoomedBySpeed += zoomPerSecondSpeed;
-            zoomToCenter(-zoomPerSecondSpeed);
-        }
-    }
-    else
+    constructor(gameManager)
     {
-        if (zoomedBySpeed > 0)
-        {
-            zoomToCenter(zoomPerSecondSpeed);
-            zoomedBySpeed -= zoomPerSecondSpeed;
-            speedReachingZoom /= speedReductionPercent;
-        } 
+        this.gameState = gameState;
+        this.gameManager = gameManager;
+        this.soundManager = gameManager.soundManager;
+    }
+
+    updateVisibleScreen()
+    {
+        let additionalScale = 2 - 2 * this.gameState.currentScale;
+        let additionalWidth = canvas.width * additionalScale;
+        let additionalHeight = canvas.height * additionalScale; 
+        this.gameState.visibleScreen.start.x = -additionalWidth / 2 ;
+        this.gameState.visibleScreen.start.y = -additionalHeight / 2 ;
+
+        this.gameState.visibleScreen.end.x = canvas.width + additionalWidth;
+        this.gameState.visibleScreen.end.y = canvas.height + additionalHeight;
+
+        this.gameState.visibleScreen.height = this.gameState.visibleScreen.end.y - this.gameState.visibleScreen.start.y;
+        this.gameState.visibleScreen.width = this.gameState.visibleScreen.end.x - this.gameState.visibleScreen.start.x;
+    }
+
+    updateZoomBySpeed(dt)
+    {
+        let playerSpeedValue = this.gameState.vPlayerSpeed.length();
+        let zoomPerSecondSpeed = this.gameState.zoomSpeed * dt;
+
+        if (this.gameState.playerSpeedValue > this.gameState.speedReachingZoom)
+        {    
+            this.gameState.speedReachingZoom += (playerSpeedValue - this.gameState.speedReachingZoom) / this.gameState.durationOfZoomBySpeedIncreasing;
+
+            if (this.gameState.zoomedBySpeed < this.gameState.maxSpeedZoom)
+            {
+                this.gameState.zoomedBySpeed += zoomPerSecondSpeed;
+                zoomToCenter(-zoomPerSecondSpeed);
+                console.log("yeah");
+            }
+        }
         else
         {
-            if (slowmoCoefficient == 1)
+            if (this.gameState.zoomedBySpeed > 0)
             {
-                ZoomNormalize();
-            }
+                zoomToCenter(zoomPerSecondSpeed);
+                this.gameState.zoomedBySpeed -= zoomPerSecondSpeed;
+                this.gameState.speedReachingZoom /= this.gameState.speedReductionPercent;
+            } 
+            else
+            {
+                if (this.gameState.slowmoCoefficient == 1)
+                {
+                    this.ZoomNormalize();
+                }
 
-            speedReachingZoom /= speedReductionPercent;
-            zoomedBySpeed = 0;
+                this.gameState.speedReachingZoom /= this.gameState.speedReductionPercent;
+                this.gameState.zoomedBySpeed = 0;
+            }
         }
     }
-}
 
-function updateAchivements()
-{
-    for (let i = 0; i < achivements.length; i++)
+    updateAchivements()
     {
-        if (achivements[i].isAchived())
+        for (let i = 0; i < this.gameState.achivements.length; i++)
         {
-            showAchivementNotivication(achivements[i].imgPath);
-            playSound(achivementSoundPath)
-            unlockAchivementInMenu(achivements[i]);
+            if (this.gameState.achivements[i].isAchived())
+            {
+                this.gameManager.renderManager.showAchivementNotivication(this.gameState.achivements[i].imgPath);
+                this.soundManager.playSound(this.gameState.achivementSoundPath);
+                this.gameManager.achivementManager.unlockAchivementInMenu(this.gameState.achivements[i]);
+            }
         }
     }
-}
 
-function zoomToCenter(scale)
-{
-    let xTranslate = -scale / 2 * canvas.width;
-    let yTranslate = -scale / 2 * canvas.height;
-
-    currentXTranslate += xTranslate;
-    currentYTranslate += yTranslate;
-    currentScale += scale;
-
-    if (currentScale < 1)
+    zoomToCenter(scale)
     {
-        updateVisibleScreen();
-    }
-    
-    ctx.scale(1 + scale, 1 + scale);
-    
-    ctx.translate(xTranslate, yTranslate);
-};
+        let xTranslate = -scale / 2 * canvas.width;
+        let yTranslate = -scale / 2 * canvas.height;
 
-function ZoomNormalize()
-{
-    ctx.scale(currentScale, currentScale);
-    ctx.translate(-currentXTranslate, -currentYTranslate);
-    currentXTranslate = 0;
-    currentYTranslate = 0;
-    currentScale = 1;
-    zoomRate = 0;
+        this.gameState.currentXTranslate += xTranslate;
+        this.gameState.currentYTranslate += yTranslate;
+        this.gameState.currentScale += scale;
 
-    updateVisibleScreen();
-}
-
-function updateSlowMo(dt)
-{
-    let zoomPerSecondSpeed = zoomSpeed * dt
-    if (isMouseDown)
-    {
-        if (zoomRate < minZoomRate)
+        if (this.gameState.currentScale < 1)
         {
-            zoomRate += zoomPerSecondSpeed;
-            zoomToCenter(zoomPerSecondSpeed);
+            this.updateVisibleScreen();
         }
-
-        if (soundMainTheme.playbackRate > minPlayBackRate)
-        {
-            soundMainTheme.playbackRate -= soundPlayBackDecreesing;
-            soundMainTheme.volume -= soundVolumeDecreesing;
-        }
-
-        if (slowmoCoefficient < maxZoomRate)
-        {
-            slowmoCoefficient += deltaSlowMo;
-        }
-    } 
-    else
-    {
-        if (zoomRate > 0)
-        {
-            let speedToBackUp = zoomPerSecondSpeed * 2 * slowmoCoefficient;
-
-            if (zoomRate < speedToBackUp)
-            {
-                speedToBackUp = zoomRate;
-            }
-
-            zoomRate -= speedToBackUp;
-            zoomToCenter(-speedToBackUp);
-
-            if (soundMainTheme.playbackRate + soundPlayBackIncreasing < 1 && slowmoCoefficient > 1.25)
-            {
-                soundMainTheme.playbackRate += soundPlayBackIncreasing;
-                soundMainTheme.volume += soundVolumeIncreasing;
-            }
         
-            if (slowmoCoefficient > 1)
+        this.gameState.ctx.scale(1 + scale, 1 + scale);
+        
+        this.gameState.ctx.translate(xTranslate, yTranslate);
+    };
+
+    ZoomNormalize()
+    {
+        this.gameState.ctx.scale(this.gameState.currentScale, this.gameState.currentScale);
+        this.gameState.ctx.translate(-this.gameState.currentXTranslate, -this.gameState.currentYTranslate);
+        this.gameState.currentXTranslate = 0;
+        this.gameState.currentYTranslate = 0;
+        this.gameState.currentScale = 1;
+        this.gameState.zoomRate = 0;
+
+        this.updateVisibleScreen();
+    }
+
+    updateSlowMo(dt)
+    {
+        let zoomPerSecondSpeed = this.gameState.zoomSpeed * dt;
+        if (this.gameState.isMouseDown)
+        {
+            if (this.gameState.zoomRate < this.gameState.minZoomRate)
             {
-                slowmoCoefficient -= deltaSlowMo;
+                this.gameState.zoomRate += zoomPerSecondSpeed;
+                this.zoomToCenter(zoomPerSecondSpeed);
+            }
+
+            if (this.gameState.soundMainTheme.playbackRate > this.gameState.minPlayBackRate)
+            {
+                this.gameState.soundMainTheme.playbackRate -= this.gameState.soundPlayBackDecreesing;
+                this.gameState.soundMainTheme.volume -= this.gameState.soundVolumeDecreesing;
+            }
+
+            if (this.gameState.slowmoCoefficient < this.gameState.maxZoomRate)
+            {
+                this.gameState.slowmoCoefficient += this.gameState.deltaSlowMo;
             }
         } 
         else
         {
-            zoomRate = 0;
-            slowmoCoefficient = 1;
-            soundMainTheme.playbackRate = 1;
-            soundMainTheme.volume = 1;
-        }
-    }
-}
-
-function updateScoreLabel(dt)
-{
-    if (isScoreLabelIncreasing)
-    {
-        let additionalSize = scoreLabelIncreasing * dt;
-        if (scoreLabelSize + additionalSize  < maxScoreLabelSize)
-        {
-            scoreLabelSize += additionalSize;
-        }
-        else
-        {
-            scoreLabelSize = maxScoreLabelSize;
-            isScoreLabelIncreasing = false;
-        }
-    } 
-    else
-    {
-        let additionalSize = scoreLabelDecreasing * dt;
-        if (scoreLabelSize - additionalSize  > minScoreLabelSize)
-        {
-            scoreLabelSize -= additionalSize;
-        }
-        else
-        {
-            scoreLabelSize = minScoreLabelSize;
-        }
-    }
-}
-
-function updatePlayer()
-{
-    camera.pos.add(vPlayerSpeed);
-    player.pos.add(vPlayerSpeed);
-    vPlayerSpeed.div(speedReductionPercent); 
-}
-
-function updateEnemySpeed()
-{
-    if (enemySpeed < maxEnemySpeed)
-    {
-        enemySpeed = Math.pow(baseEnemySpeed, gameTime);
-    }
-}
-
-function updateEnemySpawn()
-{
-    if(aliveEnemiesCount < maxEnemiesCount && Math.random() < 1 - Math.pow(enemiesSpawnCoefficient, gameTime)) 
-    {
-        let spawnDirection = parseInt(Math.random() * 4);
-        switch(spawnDirection)
-        {
-            // right
-            case 0: enemies.push( new Enemy(
-                new Vec(visibleScreen.width + camera.pos.x,
-                        Math.random() * (visibleScreen.height + camera.pos.y - enemySize.y)))); break;
-
-            // left
-            case 1: enemies.push( new Enemy(
-                    new Vec(visibleScreen.start.x + camera.pos.x - enemySize.x,
-                    Math.random() * visibleScreen.height + camera.pos.y - enemySize.y))); break;
-
-            // down
-            case 2: enemies.push( new Enemy(
-                new Vec(Math.random() * (visibleScreen.width + camera.pos.x - enemySize.y),
-                visibleScreen.height + camera.pos.y))); break;
-
-            // up
-            case 3: enemies.push( new Enemy(
-                new Vec(Math.random() * visibleScreen.width + camera.pos.x - enemySize.y,
-                visibleScreen.start.y + camera.pos.y - enemySize.y))); break;
-        }
-    }
-}
-
-function updateFoneLines()
-{
-    for (let i = 0; i < foneLineX.length; i++)
-    {
-        foneLineX[i] -= vPlayerSpeed.x;
-
-        if (foneLineX[i] < -minStartX)
-        {
-            foneLineX[i] = maxVisibleWidth * 4 / 3 + foneLineX[i];
-        }
-
-        if (foneLineX[i] > maxVisibleWidth)
-        {
-            foneLineX[i] -= maxVisibleWidth * 4 / 3;
-        }
-    }
-
-    for (let i = 0; i < foneLineY.length; i++)
-    {
-        foneLineY[i] -= vPlayerSpeed.y;
-
-        if (foneLineY[i] < -minStartY)
-        {
-            foneLineY[i] = maxVisibleHeight * 4 / 3 + foneLineY[i];
-        }
-
-        if (foneLineY[i] > maxVisibleHeight)
-        {
-            foneLineY[i] -= maxVisibleHeight * 4 / 3;
-        }
-    }
-}
-
-function updateEntities(dt) 
-{
-    // Update all the bullets
-    for (let i = 0; i < eatBalls.length; i++) 
-    {
-        const ballSpeed = new Vec(eatBalls[i].dir.x, eatBalls[i].dir.y);
-
-        ballSpeed.multiply(eatBalls[i].speed * dt);
-        eatBalls[i].pos.add(ballSpeed);
-    
-        eatBalls[i].speed /= speedReductionPercent;
-
-        if  (eatBalls[i].speed < minBallSpeed)
-        {
-            addExposionAt(eatBalls[i].pos);
-            eatBalls.splice(i, 1);
-        }
-    }
-
-    // Update all the enemies
-    for (let i = 0; i < enemies.length; i++) 
-    {
-        // move to player
-        const vEnemyDir = enemies[i].pos.vectorTo(player.pos);
-        vEnemyDir.normalize();
-        enemies[i].angle = vEnemyDir.angle();
-        enemies[i].pos.add(vEnemyDir.multiply(enemySpeed * dt));
-
-        enemies[i].sprite.update(dt);
-    }
-
-    for(let i = 0; i < explosions.length; i++) 
-    {
-        explosions[i].sprite.update(dt);
-        
-        if(explosions[i].sprite.done) 
-        {
-            explosions.splice(i, 1);
-            i--;
-        }
-    }
-}
-
-function updateCollisions() 
-{
-    for(let i = 0; i < enemies.length; i++) 
-    {
-        const enemyPos = enemies[i].pos;
-        const enemySize = enemies[i].sprite.size;
-
-        for(let j = 0; j < eatBalls.length; j++) 
-        {
-            let posBall = eatBalls[j].pos;
-            let sizeBall = eatBalls[j].sprite.size;
-
-            if(boxCollides(enemyPos, enemySize, posBall, sizeBall)) 
+            if (this.gameState.zoomRate > 0)
             {
-                enemies.splice(i, 1);
+                let speedToBackUp = this.gameState.zoomPerSecondSpeed * 2 * this.gameState.slowmoCoefficient;
+
+                if (this.gameState.zoomRate <this.gameState. speedToBackUp)
+                {
+                    this.gameState.speedToBackUp = this.gameState.zoomRate;
+                }
+
+                this.gameState.zoomRate -= speedToBackUp;
+                this.zoomToCenter(-speedToBackUp);
+
+                if (this.gameState.soundMainTheme.playbackRate + this.gameState.soundPlayBackIncreasing < 1 && this.gameState.slowmoCoefficient > 1.25)
+                {
+                    this.gameState.soundMainTheme.playbackRate += this.gameState.soundPlayBackIncreasing;
+                    this.gameState.soundMainTheme.volume += this.gameState.soundVolumeIncreasing;
+                }
+            
+                if (this.gameState.slowmoCoefficient > 1)
+                {
+                    this.gameState.slowmoCoefficient -= this.gameState.deltaSlowMo;
+                }
+            } 
+            else
+            {
+                this.gameState.zoomRate = 0;
+                this.gameState.slowmoCoefficient = 1;
+                this.gameState.soundMainTheme.playbackRate = 1;
+                this.gameState.soundMainTheme.volume = 1;
+            }
+        }
+    }
+
+    updateScoreLabel(dt)
+    {
+        if (this.gameState.isScoreLabelIncreasing)
+        {
+            let additionalSize = this.gameState.scoreLabelIncreasing * dt;
+            if (this.gameState.scoreLabelSize + additionalSize  < this.gameState.maxScoreLabelSize)
+            {
+                this.gameState.scoreLabelSize += additionalSize;
+            }
+            else
+            {
+                this.gameState.scoreLabelSize = this.gameState.maxScoreLabelSize;
+                this.gameState.isScoreLabelIncreasing = false;
+            }
+        } 
+        else
+        {
+            let additionalSize = this.gameState.scoreLabelDecreasing * dt;
+            if (this.gameState.scoreLabelSize - additionalSize  > this.gameState.minScoreLabelSize)
+            {
+                this.gameState.scoreLabelSize -= additionalSize;
+            }
+            else
+            {
+                this.gameState.scoreLabelSize = this.gameState.minScoreLabelSize;
+            }
+        }
+    }
+
+    updatePlayer()
+    {
+        this.gameState.camera.pos.add(this.gameState.vPlayerSpeed);
+        this.gameState. player.pos.add(this.gameState.vPlayerSpeed);
+        this.gameState.vPlayerSpeed.div(this.gameState.speedReductionPercent); 
+    }
+
+    updateEnemySpeed()
+    {
+        if (this.gameState.enemySpeed < this.gameState.maxEnemySpeed)
+        {
+            this.gameState.enemySpeed = Math.pow(this.gameState.baseEnemySpeed, this.gameState.gameTime);
+        }
+    }
+
+    updateEnemySpawn()
+    {
+        if(this.gameState.aliveEnemiesCount < this.gameState.maxEnemiesCount && Math.random() < 1 - Math.pow(this.gameState.enemiesSpawnCoefficient, this.gameState.gameTime)) 
+        {
+            let spawnDirection = parseInt(Math.random() * 4);
+            switch(spawnDirection)
+            {
+                // right
+                case 0: this.gameState.enemies.push( new Enemy(
+                    new Vec(this.gameState.visibleScreen.width + this.gameState.camera.pos.x,
+                            Math.random() * (this.gameState.visibleScreen.height + this.gameState.camera.pos.y - this.gameState.enemySize.y)))); break;
+
+                // left
+                case 1: this.gameState.enemies.push( new Enemy(
+                        new Vec(this.gameState.visibleScreen.start.x + this.gameState.camera.pos.x - this.gameState.enemySize.x,
+                        Math.random() * this.gameState.visibleScreen.height + this.gameState.camera.pos.y - this.gameState.enemySize.y))); break;
+
+                // down
+                case 2: this.gameState.enemies.push( new Enemy(
+                    new Vec(Math.random() * (this.gameState.visibleScreen.width + this.gameState.camera.pos.x - this.gameState.enemySize.y),
+                    this.gameState.visibleScreen.height + this.gameState.camera.pos.y))); break;
+
+                // up
+                case 3: this.gameState.enemies.push( new Enemy(
+                    new Vec(Math.random() * this.gameState.visibleScreen.width + this.gameState.camera.pos.x - this.gameState.enemySize.y,
+                    this.gameState.visibleScreen.start.y + this.gameState.camera.pos.y - this.gameState.enemySize.y))); break;
+            }
+        }
+    }
+
+    updateFoneLines()
+    {
+        for (let i = 0; i < this.gameState.foneLineX.length; i++)
+        {
+            this.gameState.foneLineX[i] -= this.gameState.vPlayerSpeed.x;
+
+            if (this.gameState.foneLineX[i] < -this.gameState.minStartX)
+            {
+                this.gameState. foneLineX[i] = this.gameState.maxVisibleWidth * 4 / 3 + this.gameState.foneLineX[i];
+            }
+
+            if (this.gameState.foneLineX[i] > this.gameState.maxVisibleWidth)
+            {
+                this.gameState.foneLineX[i] -= this.gameState.maxVisibleWidth * 4 / 3;
+            }
+        }
+
+        for (let i = 0; i < this.gameState.foneLineY.length; i++)
+        {
+            this.gameState.foneLineY[i] -= this.gameState.vPlayerSpeed.y;
+
+            if (this.gameState.foneLineY[i] < -this.gameState.minStartY)
+            {
+                this.gameState.foneLineY[i] = this.gameState.maxVisibleHeight * 4 / 3 + this.gameState.foneLineY[i];
+            }
+
+            if (this.gameState.foneLineY[i] > this.gameState.maxVisibleHeight)
+            {
+                this.gameState.foneLineY[i] -= this.gameState.maxVisibleHeight * 4 / 3;
+            }
+        }
+    }
+
+    updateEntities(dt) 
+    {
+        // Update all the bullets
+        for (let i = 0; i < this.gameState.eatBalls.length; i++) 
+        {
+            const ballSpeed = new Vec(this.gameState.eatBalls[i].dir.x, this.gameState.eatBalls[i].dir.y);
+
+            ballSpeed.multiply(this.gameState.eatBalls[i].speed * dt);
+            this.gameState.eatBalls[i].pos.add(ballSpeed);
+        
+            this.gameState.eatBalls[i].speed /= this.gameState.speedReductionPercent;
+
+            if  (this.gameState.eatBalls[i].speed < this.gameState.minBallSpeed)
+            {
+                this.gameState.addExposionAt(this.gameState.eatBalls[i].pos);
+                this.gameState.eatBalls.splice(i, 1);
+            }
+        }
+
+        // Update all the enemies
+        for (let i = 0; i < this.gameState.enemies.length; i++) 
+        {
+            // move to player
+            const vEnemyDir = this.gameState.enemies[i].pos.vectorTo(this.gameState.player.pos);
+            vEnemyDir.normalize();
+            this.gameState.enemies[i].angle = vEnemyDir.angle();
+            this.gameState.enemies[i].pos.add(vEnemyDir.multiply(this.gameState.enemySpeed * dt));
+
+            this.gameState.enemies[i].sprite.update(dt);
+        }
+
+        for (let i = 0; i < this.gameState.explosions.length; i++) 
+        {
+            this.gameState.explosions[i].sprite.update(dt);
+            
+            if (this.gameState.explosions[i].sprite.done) 
+            {
+                this.gameState.explosions.splice(i, 1);
                 i--;
-
-                playSound(enemyDeadSoundPath);
-
-                score++;
-                isScoreLabelIncreasing = true;
-
-                addExposionAt(enemyPos);
-
-                break;
             }
-        }
-
-        if(boxCollides(enemyPos, enemySize, player.pos, player.sprite.size)) 
-        {
-            gameOver();
         }
     }
 
-}
+    updateCollisions() 
+    {
+        for(let i = 0; i < this.gameState.enemies.length; i++) 
+        {
+            const enemyPos = this.gameState.enemies[i].pos;
+            const enemySize = this.gameState.enemies[i].sprite.size;
 
-function collides(x, y, r, b, x2, y2, r2, b2) 
-{
-    return !(r <= x2 || x > r2 ||
-            b <= y2 || y > b2);
-}
+            for(let j = 0; j < this.gameState.eatBalls.length; j++) 
+            {
+                let posBall = this.gameState.eatBalls[j].pos;
+                let sizeBall = this.gameState.eatBalls[j].sprite.size;
 
-function boxCollides(pos1, size1, pos2, size2) 
-{
-    return collides(pos1.x, pos1.y,
-                    pos1.x + size1.x, pos1.y + size1.y,
-                    pos2.x, pos2.y,
-                    pos2.x + size2.x, pos2.y + size2.y);
+                if(this.boxCollides(enemyPos, enemySize, posBall, sizeBall)) 
+                {
+                    this.gameState.enemies.splice(i, 1);
+                    i--;
+
+                    this.soundManager.playSound(this.gameState.enemyDeadSoundPath);
+
+                    this.gameState.score++;
+                    this.gameState.isScoreLabelIncreasing = true;
+
+                    this.gameState.addExposionAt(this.gameState.enemyPos);
+
+                    break;
+                }
+            }
+
+            if(this.boxCollides(enemyPos, enemySize, this.gameState.player.pos, this.gameState.player.sprite.size)) 
+            {
+                this.gameManager.gameOver();
+            }
+        }
+
+    }
+
+    collides(x, y, r, b, x2, y2, r2, b2) 
+    {
+        return !(r <= x2 || x > r2 ||
+                b <= y2 || y > b2);
+    }
+
+    boxCollides(pos1, size1, pos2, size2) 
+    {
+        return this.collides(pos1.x, pos1.y,
+                        pos1.x + size1.x, pos1.y + size1.y,
+                        pos2.x, pos2.y,
+                        pos2.x + size2.x, pos2.y + size2.y);
+    }
 }
