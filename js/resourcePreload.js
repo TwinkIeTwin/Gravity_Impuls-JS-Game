@@ -14,7 +14,8 @@ function showButtonStartGame()
     buttonStartGame.addEventListener("click", function(e)
     {
         document.getElementById("gamePreloader").setAttribute("hidden", true)
-        initGame();
+        let gameManager = new GameManager();
+        gameManager.initGame();
     })
 }
 

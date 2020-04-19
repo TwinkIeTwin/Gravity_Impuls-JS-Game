@@ -1,4 +1,7 @@
-function playSound(path)
+class SoundManager
 {
-    new Audio(path).play();
+    playSound(path)
+    {
+        new Audio(path).play();
+    }
 }

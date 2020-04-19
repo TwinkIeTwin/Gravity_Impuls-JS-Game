@@ -1,153 +1,162 @@
-ctx.shadowOffsetX = 5;
-ctx.shadowOffsetY = 5;
-ctx.shadowBlur = startShadowBlur;
-ctx.lineWidth = 5;
-
-function renderFone()
+class RenderManager
 {
-    ctx.beginPath();
-
-    
-    ctx.shadowColor = "darkblue";
-    ctx.strokeStyle = "lightblue";
-    
-    ctx.lineWidth = 3;
-
-    for (let i = 0; i < foneLineX.length; i++)
+    constructor()
     {
-        ctx.moveTo(foneLineX[i], visibleScreen.start.y);
-        ctx.lineTo(foneLineX[i], visibleScreen.height);
+        this.gameState = this.gameState;
+        this.gameState.ctx.shadowOffsetX = 5;
+        this.gameState.ctx.shadowOffsetY = 5;
+        this.gameState.ctx.shadowBlur = this.gameState.startShadowBlur;
+        this.gameState.ctx.lineWidth = 5;
     }
 
-    for (let i = 0; i < foneLineY.length; i++)
+    renderFone()
     {
-        ctx.moveTo(visibleScreen.start.x, foneLineY[i]);
-        ctx.lineTo(visibleScreen.width, foneLineY[i]);
+        this.gameState.ctx.beginPath();
+
+        this.gameState.ctx.shadowColor = "darkblue";
+        this.gameState.ctx.strokeStyle = "lightblue";
+        
+        this.gameState.ctx.lineWidth = 3;
+
+        for (let i = 0; i < this.gameState.foneLineX.length; i++)
+        {
+            this.gameState.ctx.moveTo(this.gameState.foneLineX[i], this.gameState.visibleScreen.start.y);
+            this.gameState.ctx.lineTo(this.gameState.foneLineX[i], this.gameState.visibleScreen.height);
+        }
+
+        for (let i = 0; i < this.gameState.foneLineY.length; i++)
+        {
+            this.gameState.ctx.moveTo(this.gameState.visibleScreen.start.x, this.gameState.foneLineY[i]);
+            this.gameState.ctx.lineTo(this.gameState.visibleScreen.width, this.gameState.foneLineY[i]);
+        }
+
+        this.gameState.ctx.stroke();
     }
 
-    ctx.stroke();
-}
-
-function renderSlowMoEdges()
-{
-    ctx.shadowColor = "red";
-    ctx.shadowBlur = startShadowBlur - 2 * (slowmoCoefficient - 1);
-    ctx.beginPath();
-    ctx.arc(centerOfCanvas.x, centerOfCanvas.y, centerOfCanvas.y, 0, 2 * Math.PI, false);
-    
-    ctx.lineWidth = shadowEdgesWidth;
-    ctx.strokeStyle = "rgba(0,0,0," + (slowmoCoefficient - 1) / 6 + ")";
-
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(centerOfCanvas.x, centerOfCanvas.y, centerOfCanvas.x, 0, 2 * Math.PI, false);
-    
-    ctx.lineWidth = shadowEdgesWidth;
-    ctx.strokeStyle = "rgba(0,0,0," + (slowmoCoefficient - 1) / 3 + ")";
-
-    ctx.stroke();
-}
-
-function renderPlayer()
-{
-    let playerPos =  new Vec(player.pos.x, player.pos.y);
-    player.pos = new Vec(centerOfCanvas.x - player.sprite.size.x / 2, centerOfCanvas.y - player.sprite.size.y / 2);
-
-    ctx.shadowColor = "#2AA2DD";
-    
-    renderEntity(player, playerAngle);
-    player.pos = playerPos;
-}
-
-function renderClear()
-{
-    ctx.fillStyle = "#a0a0a0";
-    ctx.fillRect(visibleScreen.start.x , visibleScreen.start.y , visibleScreen.width, visibleScreen.height);
-}
-
-function renderPause()
-{
-    ctx.fillStyle = 'rgba(255,0,0,0.25)';
-    ctx.fillRect(visibleScreen.start.x , visibleScreen.start.y , visibleScreen.width, visibleScreen.height);
-}
-
-function renderAim()
-{
-    ctx.beginPath();
-    ctx.shadowColor = "red";
-    ctx.strokeStyle = "red";
-
-    ctx.moveTo(canvas.width / 2, canvas.height / 2);
-    let endProjectilePos = new Vec(camera.pos.x + centerOfCanvas.x, camera.pos.y + centerOfCanvas.y);
-    let projectileSpeed = new Vec(vDirMouse.x, vDirMouse.y);  
-    projectileSpeed.multiply(ballStartSpeed);
-    endProjectilePos.add(projectileSpeed);
-                
-    ctx.lineTo(endProjectilePos.x - camera.pos.x, endProjectilePos.y -camera.pos.y);
-    ctx.stroke();
-}
-
-function renderScores()
-{
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.font = scoreLabelSize / (1 + currentScale) + "% Arial";
-    ctx.strokeStyle = "white";
-    ctx.shadowColor = "#2AA2DD";
-    ctx.textAlign = "center"
-    ctx.textBaseline = "middle"
-    ctx.strokeText(score, centerOfCanvas.x, visibleScreen.start.y / 2 + maxScoreLabelSize / 20);
-}
-
-function renderEntitiesRelativeCamera(list) 
-{
-    for(let i = 0; i < list.length; i++) 
+    renderSlowMoEdges()
     {
-        renderEntityRelativeCamera(list[i]);
-    }    
-}
+        this.gameState.ctx.shadowColor = "red";
+        this.gameState.ctx.shadowBlur = this.gameState.startShadowBlur - 2 * (this.gameState.slowmoCoefficient - 1);
+        this.gameState.ctx.beginPath();
+        this.gameState.ctx.arc(this.gameState.centerOfCanvas.x, this.gameState.centerOfCanvas.y, this.gameState.centerOfCanvas.y, 0, 2 * Math.PI, false);
+        
+        this.gameState.ctx.lineWidth = this.gameState.shadowEdgesWidth;
+        this.gameState.ctx.strokeStyle = "rgba(0,0,0," + (this.gameState.slowmoCoefficient - 1) / 6 + ")";
 
-function renderEntity(entity, angle)
-{
-    ctx.save();
-    ctx.translate(entity.pos.x, entity.pos.y);
-    entity.sprite.render(ctx, angle);
-    ctx.restore();
-}
+        this.gameState.ctx.stroke();
 
-function renderEntityRelativeCamera(entity) 
-{
-    ctx.save();
-    ctx.translate(entity.pos.x - camera.pos.x, entity.pos.y - camera.pos.y);
-    entity.sprite.render(ctx, entity.angle);
-    ctx.restore();
-}
+        this.gameState.ctx.beginPath();
+        this.gameState.ctx.arc(this.gameState.centerOfCanvas.x, this.gameState.centerOfCanvas.y, this.gameState.centerOfCanvas.x, 0, 2 * Math.PI, false);
+        
+        this.gameState.ctx.lineWidth = this.gameState.shadowEdgesWidth;
+        this.gameState.ctx.strokeStyle = "rgba(0,0,0," + (this.gameState.slowmoCoefficient - 1) / 3 + ")";
 
-function showNotification({top = 0, right = 0, className, html}) 
-{
-    let notification = document.createElement('div');
-    notification.className = "notification";
-    if (className) 
-    {
-        notification.classList.add(className);
+        this.gameState.ctx.stroke();
     }
 
-    notification.style.top = top + 'px';
-    notification.style.right = right + 'px';
+    renderPlayer()
+    {
+        let playerPos =  new Vec(this.gameState.player.pos.x, this.gameState.player.pos.y);
+        this.gameState.player.pos = new Vec(this.gameState.centerOfCanvas.x - this.gameState.player.sprite.size.x / 2, this.gameState.centerOfCanvas.y - this.gameState.player.sprite.size.y / 2);
 
-    notification.innerHTML = html;
-    document.body.append(notification);
+        this.gameState.ctx.shadowColor = "#2AA2DD";
+        
+        this.renderEntity(this.gameState.player, this.gameState.playerAngle);
+        this.gameState.player.pos = playerPos;
+    }
 
-    setTimeout(() => notification.remove(), notificationDuration);
-}
+    renderClear()
+    {
+        this.gameState.ctx.fillStyle = "#a0a0a0";
+        this.gameState.ctx.fillRect(this.gameState.visibleScreen.start.x , this.gameState.visibleScreen.start.y , this.gameState.visibleScreen.width, this.gameState.visibleScreen.height);
+    }
 
-function showAchivementNotivication(imgPath)
-{
-    showNotification({
-        top: 10,
-        right: 10,
-        html: '<img src = "' + imgPath + '" width = 50px height = 50px alt="achivement" />',
-        className: "achivementUnlockedNotify"
-    });
+    renderPause()
+    {
+        this.gameState.ctx.fillStyle = 'rgba(255,0,0,0.25)';
+        this.gameState.ctx.fillRect(this.gameState.visibleScreen.start.x , this.gameState.visibleScreen.start.y , this.gameState.visibleScreen.width, this.gameState.visibleScreen.height);
+    }
+
+    renderAim()
+    {
+        this.gameState.ctx.beginPath();
+        this.gameState.ctx.shadowColor = "red";
+        this.gameState.ctx.strokeStyle = "red";
+
+        this.gameState.ctx.moveTo(this.gameState.canvas.width / 2, this.gameState.canvas.height / 2);
+        let endProjectilePos = new Vec(this.gameState.camera.pos.x + this.gameState.centerOfCanvas.x, this.gameState.camera.pos.y + this.gameState.centerOfCanvas.y);
+        let projectileSpeed = new Vec(this.gameState.vDirMouse.x, this.gameState.vDirMouse.y);  
+        projectileSpeed.multiply(this.gameState.ballStartSpeed);
+        endProjectilePos.add(projectileSpeed);
+                    
+        this.gameState.ctx.lineTo(endProjectilePos.x - this.gameState.camera.pos.x, endProjectilePos.y -this.gameState.camera.pos.y);
+        this.gameState.ctx.stroke();
+    }
+
+    renderScores()
+    {
+        this.gameState.ctx.lineWidth = 3;
+        this.gameState.ctx.beginPath();
+        this.gameState.ctx.font = this.gameState.scoreLabelSize / (1 + this.gameState.currentScale) + "% Arial";
+        this.gameState.ctx.strokeStyle = "white";
+        this.gameState.ctx.shadowColor = "#2AA2DD";
+        this.gameState.ctx.textAlign = "center";
+        this.gameState.ctx.textBaseline = "middle";
+        this.gameState.ctx.strokeText(this.gameState.score, this.gameState.centerOfCanvas.x, this.gameState.visibleScreen.start.y / 2 +this.gameState.maxScoreLabelSize / 20);
+    }
+
+    renderEntitiesRelativeCamera(list) 
+    {
+        for(let i = 0; i < list.length; i++) 
+        {
+            if (!list[i] == undefined)
+            {
+                this.renderEntityRelativeCamera(list[i]);
+            }
+        }    
+    }
+
+    renderEntity(entity, angle)
+    {
+        this.gameState.ctx.save();
+        this.gameState.ctx.translate(entity.pos.x, entity.pos.y);
+        entity.sprite.render(this.gameState.ctx, angle);
+        this.gameState.ctx.restore();
+    }
+
+    renderEntityRelativeCamera(entity) 
+    {
+        this.gameState.ctx.save();
+        this.gameState.ctx.translate(entity.pos.x - this.gameState.camera.pos.x, entity.pos.y - this.gameState.camera.pos.y);
+        entity.sprite.render(this.gameState.ctx, entity.angle);
+        this.gameState.ctx.restore();
+    }
+
+    showNotification({top = 0, right = 0, className, html}) 
+    {
+        let notification = document.createElement('div');
+        notification.className = "notification";
+        if (className) 
+        {
+            notification.classList.add(className);
+        }
+
+        notification.style.top = top + 'px';
+        notification.style.right = right + 'px';
+
+        notification.innerHTML = html;
+        document.body.append(notification);
+
+        setTimeout(() => notification.remove(), this.gameState.notificationDuration);
+    }
+
+    showAchivementNotivication(imgPath)
+    {
+        this.showNotification({
+            top: 10,
+            right: 10,
+            html: '<img src = "' + imgPath + '" width = 50px height = 50px alt="achivement" />',
+            className: "achivementUnlockedNotify"
+        });
+    }
 }
